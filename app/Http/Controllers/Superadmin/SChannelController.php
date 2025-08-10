@@ -33,7 +33,7 @@ class SChannelController extends Controller
         $validated = $request->validate([
             'customer_id' => 'required|exists:customers,id',
             'channel_code' => 'nullable|unique:channels,channel_code',
-            'channel_type' => 'required|in:bank,ewallet,qris,virtual_account,pulsa',
+            'channel_type' => 'required|in:transfer,ewallet,qris,virtual_account,pulsa',
         ]);
 
         $channel = Channel::create($validated);
@@ -54,7 +54,7 @@ class SChannelController extends Controller
         $validated = $request->validate([
             'customer_id' => 'required|exists:customers,id',
             'channel_code' => 'nullable|unique:channels,channel_code,' . $channel->id,
-            'channel_type' => 'required|in:bank,ewallet,qris,virtual_account,pulsa',
+            'channel_type' => 'required|in:transfer,ewallet,qris,virtual_account,pulsa',
         ]);
 
         $channel->update($validated);
