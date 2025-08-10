@@ -17,15 +17,15 @@ class SChannelController extends Controller
 
     public function data(Request $request)
     {
-        $channels = Channel::with('customer')
-            ->when($request->search, function ($query) use ($request) {
-                $query->whereHas('customer', function ($q) use ($request) {
-                    $q->where('full_name', 'like', '%' . $request->search . '%');
-                });
-            })
-            ->paginate($request->per_page ?? 10);
+        $perPage = $request->per_page ?? 10;
 
-        return response()->json($channels);
+        $customers = Customer::with('channels')
+            ->when($request->search, function ($query) use ($request) {
+                $query->where('full_name', 'like', '%' . $request->search . '%');
+            })
+            ->paginate($perPage);
+
+        return response()->json($customers);
     }
 
     public function store(Request $request)

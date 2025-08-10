@@ -31,8 +31,7 @@
                             <label for="channel_type" class="form-label">Pilih Tipe Channel</label>
                             <select id="channel_type" name="channel_type" class="form-select" required>
                                 <option value="">-- Pilih Tipe Channel --</option>
-                                <option value="bank">Bank</option>
-                                <option value="ewallet">Ewallet</option>
+                                <option value="transfer">Transfer</option>
                                 <option value="qris">QRIS</option>
                                 <option value="virtual_account">Virtual Account</option>
                                 <option value="pulsa">Pulsa</option>
@@ -152,7 +151,7 @@
             qrisProofDiv.querySelector('input').required = false;
             qrisProofDiv.querySelector('input').value = '';
 
-            if (type === 'bank' || type === 'ewallet') {
+            if (type === 'transfer' || type === 'ewallet') {
                 accountNameDiv.style.display = 'block';
                 accountNumberDiv.style.display = 'block';
                 accountNameInput.required = true;

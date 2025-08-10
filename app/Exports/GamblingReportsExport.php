@@ -41,7 +41,8 @@ class GamblingReportsExport implements FromCollection, WithHeadings, WithStyles,
         $query = GamblingDeposit::with(['channel', 'attachments'])
             ->whereHas('channel', function ($q) use ($customerId) {
                 $q->where('customer_id', $customerId);
-            });
+            })
+            ->where('report_status', 'approved');
 
         if (!$this->exportAll && count($this->ids)) {
             $query->whereIn('id', $this->ids);

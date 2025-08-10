@@ -52,11 +52,9 @@
                         aria-describedby="DataTables_Table_0_info">
                         <thead class="border-top">
                             <tr>
-                                <th>#</th>
-                                <th>Channel pelanggan</th>
-                                <th>Kode Channel</th>
-                                <th>Tipe Channel</th>
-                                <th>Aksi</th>
+                                <th style="width: 50px">#</th>
+                                <th>Channel Pelanggan</th>
+                                <th>Channels</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -94,14 +92,12 @@
                     </select>
                     <div class="invalid-feedback"></div>
                 </div>
-                <!-- Nama Channel dihapus -->
 
                 <div class="mb-6 form-control-validation fv-plugins-icon-container">
                     <label class="form-label" for="add-channel-type">Tipe Channel</label>
                     <select id="add-channel-type" name="channel_type" class="form-select" required>
                         <option value="">Pilih Tipe</option>
-                        <option value="bank">Bank</option>
-                        <option value="ewallet">Ewallet</option>
+                        <option value="transfer">Transfer</option>
                         <option value="qris">QRIS</option>
                         <option value="virtual_account">Virtual Account</option>
                         <option value="pulsa">Pulsa</option>
@@ -149,8 +145,7 @@
                     <label class="form-label" for="edit-channel-type">Tipe Channel</label>
                     <select id="edit-channel-type" name="channel_type" class="form-select" required>
                         <option value="">Pilih Tipe</option>
-                        <option value="bank">Bank</option>
-                        <option value="ewallet">Ewallet</option>
+                        <option value="transfer">Transfer</option>
                         <option value="qris">QRIS</option>
                         <option value="virtual_account">Virtual Account</option>
                         <option value="pulsa">Pulsa</option>
@@ -180,7 +175,7 @@
     <script>
         function toggleChannelCodeInput(selectElement, codeInputWrapper) {
             const value = selectElement.value;
-            if (value === 'bank' || value === 'pulsa') {
+            if (value === 'transfer' || value === 'pulsa') {
                 codeInputWrapper.style.display = 'none';
                 codeInputWrapper.querySelector('input').value = '';
             } else {
@@ -240,12 +235,12 @@
                 .toLowerCase()
                 .split('_')
                 .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                .join(' '); 
+                .join(' ');
         }
 
         function fetchChannels(page = 1) {
             currentPage = page;
-            tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Loading...</td></tr>';
+            tableBody.innerHTML = `<tr><td colspan="3" class="text-center">Loading...</td></tr>`;
 
             axios.get(`/superadmin/channels/data`, {
                     params: {
@@ -264,7 +259,7 @@
 
                     if (data.length === 0) {
                         tableBody.innerHTML =
-                            '<tr><td colspan="6" class="text-center">Channel tidak ditemukan.</td></tr>';
+                            `<tr><td colspan="3" class="text-center">Channel tidak ditemukan.</td></tr>`;
                         pagination.innerHTML = '';
                         infoText.textContent = `Showing 0 to 0 of 0 entries`;
                         return;
@@ -275,19 +270,38 @@
                         `Showing ${(current_page - 1) * perPage + 1} to ${Math.min(current_page * perPage, total)} of ${total} entries`;
 
                     tableBody.innerHTML = '';
-                    data.forEach((channel, index) => {
+
+                    data.forEach((customer, index) => {
+                        let channelsHtml = '';
+
+                        if (customer.channels.length === 0) {
+                            channelsHtml = `<span class="text-muted fst-italic">Belum ada channel</span>`;
+                        } else {
+                            channelsHtml = customer.channels.map(channel => `
+                                <div class="channel-card d-flex align-items-center justify-content-between mb-2 p-2 border rounded-2 shadow-sm">
+                                    <div>
+                                        <span class="badge bg-primary me-2">${channel.channel_code || '-'}</span>
+                                        <span class="text-capitalize text-secondary">${formatChannelType(channel.channel_type)}</span>
+                                    </div>
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-warning btn-edit" data-id="${channel.id}" data-customer="${customer.id}" title="Edit Channel">
+                                            <i class="icon-base ti tabler-pencil"></i>
+                                        </button>
+                                        <button class="btn btn-outline-danger btn-delete" data-id="${channel.id}" data-customer="${customer.id}" title="Hapus Channel">
+                                            <i class="icon-base ti tabler-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('');
+                        }
+
                         tableBody.innerHTML += `
-                    <tr>
-                        <td>${(current_page - 1) * perPage + index + 1}</td>
-                        <td>${channel.customer.full_name}</td>
-                        <td>${channel.channel_code || 'Tidak ada kode'}</td>
-                        <td>${formatChannelType(channel.channel_type)}</td>
-                        <td>
-                            <button class="btn btn-sm btn-warning btn-edit" data-id="${channel.id}">Edit</button>
-                            <button class="btn btn-sm btn-danger btn-delete" data-id="${channel.id}">Delete</button>
-                        </td>
-                    </tr>
-                `;
+                            <tr class="align-middle">
+                                <td>${(current_page - 1) * perPage + index + 1}</td>
+                                <td><strong>${customer.full_name}</strong></td>
+                                <td>${channelsHtml}</td>
+                            </tr>
+                        `;
                     });
 
                     renderPagination(current_page, last_page);
@@ -295,13 +309,14 @@
                 })
                 .catch(err => {
                     tableBody.innerHTML =
-                        `<tr><td colspan="6" class="text-center text-danger">Gagal memuat data.</td></tr>`;
+                        `<tr><td colspan="3" class="text-center text-danger">Gagal memuat data.</td></tr>`;
                     pagination.innerHTML = '';
                     infoText.textContent = 'Showing 0 to 0 of 0 entries';
                     console.error(err);
                     Swal.fire('Error', 'Gagal memuat data channel.', 'error');
                 });
         }
+
 
         function renderPagination(currentPage, lastPage) {
             let html = '';
@@ -328,16 +343,17 @@
             }
 
             html += `
-    <li class="page-item next ${currentPage === lastPage ? 'disabled' : ''}">
-        <a class="page-link waves-effect" href="javascript:void(0);" data-page="next">
-            <i class="icon-base ti tabler-chevron-right icon-sm"></i>
-        </a>
-    </li>
-    <li class="page-item last ${currentPage === lastPage ? 'disabled' : ''}">
-        <a class="page-link waves-effect" href="javascript:void(0);" data-page="last">
-            <i class="icon-base ti tabler-chevrons-right icon-sm"></i>
-        </a>
-    </li>`;
+                <li class="page-item next ${currentPage === lastPage ? 'disabled' : ''}">
+                    <a class="page-link waves-effect" href="javascript:void(0);" data-page="next">
+                        <i class="icon-base ti tabler-chevron-right icon-sm"></i>
+                    </a>
+                </li>
+                <li class="page-item last ${currentPage === lastPage ? 'disabled' : ''}">
+                    <a class="page-link waves-effect" href="javascript:void(0);" data-page="last">
+                        <i class="icon-base ti tabler-chevrons-right icon-sm"></i>
+                    </a>
+                </li>
+            `;
 
             pagination.innerHTML = html;
 
@@ -376,7 +392,7 @@
 
         function toggleChannelCodeInput(selectElement, codeInputWrapper) {
             const value = selectElement.value;
-            if (value === 'bank' || value === 'pulsa') {
+            if (value === 'transfer' || value === 'pulsa') {
                 codeInputWrapper.style.display = 'none';
                 codeInputWrapper.querySelector('input').value = '';
             } else {

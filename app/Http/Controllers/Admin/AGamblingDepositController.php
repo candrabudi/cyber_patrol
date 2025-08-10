@@ -73,7 +73,7 @@ class AGamblingDepositController extends Controller
             $validated = $request->validate([
                 'website_name' => 'required|string|max:255',
                 'website_url' => 'required|url',
-                'channel_type' => 'required|in:bank,ewallet,qris,virtual_account,pulsa',
+                'channel_type' => 'required|in:transfer,ewallet,qris,virtual_account,pulsa',
                 'channel_id' => 'nullable|exists:channels,id',
                 'account_name' => 'nullable|string|max:255',
                 'account_number' => 'nullable|string|max:50',
