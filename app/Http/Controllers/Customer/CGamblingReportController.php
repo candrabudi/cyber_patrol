@@ -23,7 +23,8 @@ class CGamblingReportController extends Controller
         $query = GamblingDeposit::with('channel')
             ->whereHas('channel', function ($q) use ($customerId) {
                 $q->where('customer_id', $customerId);
-            });
+            })
+            ->where('report_status', 'approved');
 
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {

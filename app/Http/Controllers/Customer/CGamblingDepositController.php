@@ -24,7 +24,8 @@ class CGamblingDepositController extends Controller
         $query = GamblingDeposit::with(['channel.customer', 'creator'])
             ->whereHas('channel.customer', function ($q) use ($userId) {
                 $q->where('user_id', $userId);
-            });
+            })
+            ->where('report_status', 'approved');
 
         if ($search) {
             $query->where(function ($q) use ($search) {
