@@ -4,7 +4,6 @@ namespace App\Exports;
 
 use App\Models\GamblingDeposit;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Http;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithStyles;
@@ -14,7 +13,7 @@ use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
-use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
+use Illuminate\Support\Facades\URL;
 
 class GamblingReportsExport implements FromCollection, WithHeadings, WithStyles, WithColumnWidths, WithColumnFormatting, WithEvents
 {
@@ -72,24 +71,22 @@ class GamblingReportsExport implements FromCollection, WithHeadings, WithStyles,
         $data = $query->orderBy('created_at', 'desc')->get();
 
         return $data->map(function ($item) {
-            $assetBase = asset('storage/');
-
             $websiteProofs = $item->attachments
                 ->where('attachment_type', 'website_proof')
                 ->pluck('file_path')
-                ->map(fn($path) => $assetBase . '/' . ltrim($path, '/'))
+                ->map(fn($path) => URL::asset('storage/' . $path))
                 ->implode(' | ');
 
             $accountProofs = $item->attachments
                 ->where('attachment_type', 'account_proof')
                 ->pluck('file_path')
-                ->map(fn($path) => $assetBase . '/' . ltrim($path, '/'))
+                ->map(fn($path) => URL::asset('storage/' . $path))
                 ->implode(' | ');
 
             $qrisProofs = $item->attachments
                 ->where('attachment_type', 'qris_proof')
                 ->pluck('file_path')
-                ->map(fn($path) => $assetBase . '/' . ltrim($path, '/'))
+                ->map(fn($path) => URL::asset('storage/' . $path))
                 ->implode(' | ');
 
             return [
@@ -113,7 +110,7 @@ class GamblingReportsExport implements FromCollection, WithHeadings, WithStyles,
                 $item->updated_at,
                 $websiteProofs,
                 $accountProofs,
-                $qrisProofs
+                $qrisProofs,
             ];
         });
     }
@@ -123,9 +120,9 @@ class GamblingReportsExport implements FromCollection, WithHeadings, WithStyles,
         return [
             'Nama Website',
             'URL Website',
-            'Terkonfirmasi Judi',
+            'Konfirmasi Judi',
             'Dapat Diakses',
-            'ID Saluran',
+            'ID Channel',
             'Nomor Akun',
             'Nama Akun',
             'Tanggal Laporan',
@@ -136,9 +133,9 @@ class GamblingReportsExport implements FromCollection, WithHeadings, WithStyles,
             'Status Validasi Akun',
             'Status Laporan',
             'Sudah Selesai',
-            'Keterangan',
+            'Catatan',
             'Dibuat Pada',
-            'Diperbarui Pada',
+            'Diupdate Pada',
             'Bukti Website',
             'Bukti Akun',
             'Bukti QRIS',
@@ -151,9 +148,8 @@ class GamblingReportsExport implements FromCollection, WithHeadings, WithStyles,
         $sheet->getStyle('A1:U1')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
         $sheet->getStyle('A1:U1')->getFill()->getStartColor()->setARGB('FFB0C4DE');
         $sheet->getRowDimension(1)->setRowHeight(40);
-
-        $sheet->getStyle('A1:U' . $sheet->getHighestRow())->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
-        $sheet->getStyle('A1:U' . $sheet->getHighestRow())->getAlignment()->setWrapText(true);
+        $sheet->getStyle('A1:U1')->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
+        $sheet->getStyle('A1:U1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
 
         $styleArray = [
             'borders' => [
@@ -163,22 +159,26 @@ class GamblingReportsExport implements FromCollection, WithHeadings, WithStyles,
                 ],
             ],
         ];
-        $sheet->getStyle('A1:U' . $sheet->getHighestRow())->applyFromArray($styleArray);
+
+        $highestRow = $sheet->getHighestRow();
+        $sheet->getStyle("A1:U{$highestRow}")->applyFromArray($styleArray);
+        $sheet->getStyle("A2:U{$highestRow}")->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
     }
+
 
     public function columnWidths(): array
     {
         return [
             'A' => 25,
             'B' => 35,
-            'C' => 18,
+            'C' => 15,
             'D' => 15,
             'E' => 12,
-            'F' => 20,
+            'F' => 25,
             'G' => 25,
             'H' => 18,
-            'I' => 20,
-            'J' => 18,
+            'I' => 30,
+            'J' => 20,
             'K' => 20,
             'L' => 20,
             'M' => 20,
@@ -196,10 +196,27 @@ class GamblingReportsExport implements FromCollection, WithHeadings, WithStyles,
     public function columnFormats(): array
     {
         return [
+            'A' => NumberFormat::FORMAT_TEXT,
+            'B' => NumberFormat::FORMAT_TEXT,
+            'C' => NumberFormat::FORMAT_TEXT,
+            'D' => NumberFormat::FORMAT_TEXT,
+            'E' => NumberFormat::FORMAT_TEXT,
             'F' => NumberFormat::FORMAT_TEXT,
+            'G' => NumberFormat::FORMAT_TEXT,
             'H' => NumberFormat::FORMAT_TEXT,
+            'I' => NumberFormat::FORMAT_TEXT,
+            'J' => NumberFormat::FORMAT_TEXT,
+            'K' => NumberFormat::FORMAT_TEXT,
+            'L' => NumberFormat::FORMAT_TEXT,
+            'M' => NumberFormat::FORMAT_TEXT,
+            'N' => NumberFormat::FORMAT_TEXT,
+            'O' => NumberFormat::FORMAT_TEXT,
             'P' => NumberFormat::FORMAT_TEXT,
             'Q' => NumberFormat::FORMAT_TEXT,
+            'R' => NumberFormat::FORMAT_TEXT,
+            'S' => NumberFormat::FORMAT_TEXT,
+            'T' => NumberFormat::FORMAT_TEXT,
+            'U' => NumberFormat::FORMAT_TEXT,
         ];
     }
 
@@ -207,42 +224,7 @@ class GamblingReportsExport implements FromCollection, WithHeadings, WithStyles,
     {
         return [
             AfterSheet::class => function (AfterSheet $event) {
-                $sheet = $event->sheet->getDelegate();
-                $sheet->freezePane('A2');
-
-                $highestRow = $sheet->getHighestRow();
-
-                for ($row = 2; $row <= $highestRow; $row++) {
-                    for ($colIndex = 19; $colIndex <= 21; $colIndex++) {
-                        $cell = $sheet->getCellByColumnAndRow($colIndex, $row);
-                        $proofUrls = explode(' | ', $cell->getValue());
-                        $cell->setValue(null);
-
-                        $offsetX = 0;
-                        foreach ($proofUrls as $url) {
-                            $url = trim($url);
-                            if (empty($url)) continue;
-
-                            try {
-                                $tempFile = tempnam(sys_get_temp_dir(), 'proof_');
-                                $imageContent = Http::get($url)->body();
-                                file_put_contents($tempFile, $imageContent);
-
-                                $drawing = new Drawing();
-                                $drawing->setPath($tempFile);
-                                $drawing->setCoordinates($cell->getColumn() . $row);
-                                $drawing->setOffsetX($offsetX);
-                                $drawing->setOffsetY(5);
-                                $drawing->setHeight(50);
-                                $drawing->setWorksheet($sheet);
-
-                                $offsetX += 60;
-                            } catch (\Exception $e) {
-                                // skip kalau error ambil gambar
-                            }
-                        }
-                    }
-                }
+                $event->sheet->freezePane('A2');
             },
         ];
     }
