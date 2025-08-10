@@ -12,6 +12,27 @@ class AuthController extends Controller
 {
     public function showLoginForm()
     {
+        if (Auth::user()->role == 'superadmin') {
+            return response()->json([
+                'message' => 'Login successful',
+                'redirect_url' => route('superadmin.dashboard')
+            ]);
+        } else if (Auth::user()->role == 'admin') {
+            return response()->json([
+                'message' => 'Login successful',
+                'redirect_url' => route('admin.dashboard')
+            ]);
+        } else if (Auth::user()->role == 'reviewer') {
+            return response()->json([
+                'message' => 'Login successful',
+                'redirect_url' => route('reviewer.dashboard')
+            ]);
+        } else if (Auth::user()->role == 'customer') {
+            return response()->json([
+                'message' => 'Login successful',
+                'redirect_url' => route('customer.dashboard')
+            ]);
+        }
         return view('auth.login');
     }
 
