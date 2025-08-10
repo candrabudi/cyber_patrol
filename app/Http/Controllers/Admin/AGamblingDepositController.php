@@ -150,7 +150,7 @@ class AGamblingDepositController extends Controller
             $deposit->save();
 
             if ($request->hasFile('website_proofs')) {
-                $path = $request->file('website_proofs')->store('attachments/website_proof');
+                $path = $request->file('website_proofs')->store('attachments/website_proof', 'public');
                 GamblingDepositAttachment::create([
                     'gambling_deposit_id' => $deposit->id,
                     'attachment_type' => 'website_proof',
@@ -159,7 +159,7 @@ class AGamblingDepositController extends Controller
             }
 
             if ($request->hasFile('account_proofs')) {
-                $path = $request->file('account_proofs')->store('attachments/account_proof');
+                $path = $request->file('account_proofs')->store('attachments/account_proof', 'public');
                 GamblingDepositAttachment::create([
                     'gambling_deposit_id' => $deposit->id,
                     'attachment_type' => 'account_proof',
@@ -168,7 +168,7 @@ class AGamblingDepositController extends Controller
             }
 
             if ($request->hasFile('qris_proofs') && $validated['channel_type'] === 'qris') {
-                $path = $request->file('qris_proofs')->store('attachments/qris_proof');
+                $path = $request->file('qris_proofs')->store('attachments/qris_proof', 'public');
                 GamblingDepositAttachment::create([
                     'gambling_deposit_id' => $deposit->id,
                     'attachment_type' => 'qris_proof',
