@@ -37,14 +37,15 @@
                     <div class="card-body">
                         <div class="app-brand justify-content-center mb-6">
                             <a href="/" class="app-brand-link d-flex align-items-center justify-content-center">
-                                <img src="https://cdn-icons-png.flaticon.com/128/6601/6601019.png" alt="CyberPatrol Logo" width="40"
-                                    height="40" style="margin-right: 10px;" />
+                                <img src="https://cdn-icons-png.flaticon.com/128/6601/6601019.png"
+                                    alt="CyberPatrol Logo" width="40" height="40" style="margin-right: 10px;" />
                                 <span class="app-brand-text demo text-heading fw-bold"
                                     style="font-size: 1.5rem; color: #007bff;">CyberPatrol</span>
                             </a>
                         </div>
                         <h4 class="mb-1 text-center">Selamat Datang di CyberPatrol!</h4>
-                        <p class="mb-6 text-center">Lindungi diri Anda dari situs ilegal dengan sistem pengawasan kami.</p>
+                        <p class="mb-6 text-center">Lindungi diri Anda dari situs ilegal dengan sistem pengawasan kami.
+                        </p>
 
                         <form id="formAuthentication" class="mb-4" action="{{ route('login') }}" method="POST">
                             @csrf
@@ -63,8 +64,7 @@
                                 </div>
                             </div>
                             <div class="mb-6">
-                                <button id="btnLogin" class="btn btn-primary d-grid w-100"
-                                    type="button">Login</button>
+                                <button id="btnLogin" class="btn btn-primary w-100" type="button">Login</button>
                             </div>
                         </form>
 
@@ -96,7 +96,7 @@
         const form = document.getElementById('formAuthentication');
         const btnLogin = document.getElementById('btnLogin');
 
-        btnLogin.addEventListener('click', function() {
+        function submitLogin() {
             const formData = new FormData(form);
             btnLogin.disabled = true;
             btnLogin.innerHTML = 'Loading...';
@@ -113,43 +113,32 @@
                     });
                 })
                 .catch(error => {
+                    let pesanError = 'Terjadi kesalahan. Silakan coba lagi.';
                     if (error.response) {
                         if (error.response.status === 422) {
-                            const errors = error.response.data.errors;
-                            let pesanError = '';
-                            for (const key in errors) {
-                                pesanError += errors[key].join(' ') + '\n';
-                            }
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Gagal',
-                                text: pesanError
-                            });
+                            pesanError = Object.values(error.response.data.errors).flat().join('\n');
                         } else if (error.response.status === 401) {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Gagal Login',
-                                text: 'Email/Username atau password salah'
-                            });
-                        } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Terjadi Kesalahan',
-                                text: 'Silakan coba lagi nanti.'
-                            });
+                            pesanError = 'Email/Username atau password salah';
                         }
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Terjadi Kesalahan',
-                            text: 'Tidak dapat terhubung ke server.'
-                        });
                     }
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Gagal',
+                        text: pesanError
+                    });
                 })
                 .finally(() => {
                     btnLogin.disabled = false;
                     btnLogin.innerHTML = 'Login';
                 });
+        }
+
+        btnLogin.addEventListener('click', submitLogin);
+        form.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                submitLogin();
+            }
         });
     </script>
 

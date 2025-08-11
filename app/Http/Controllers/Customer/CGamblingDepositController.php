@@ -17,12 +17,14 @@ class CGamblingDepositController extends Controller
     public function data(Request $request)
     {
         $perPage = $request->get('per_page', 10);
-        $search = $request->get('search', '');
+        $search  = $request->get('search', '');
+        $userId  = Auth::id();
 
-        $userId = Auth::id();
-
-        $query = GamblingDeposit::with(['channel.customer', 'creator'])
-            ->whereHas('channel.customer', function ($q) use ($userId) {
+        $query = GamblingDeposit::with([
+                'channel.provider.customerProviders.customer',
+                'creator'
+            ])
+            ->whereHas('channel.provider.customerProviders.customer', function ($q) use ($userId) {
                 $q->where('user_id', $userId);
             })
             ->where('report_status', 'approved');
@@ -33,7 +35,7 @@ class CGamblingDepositController extends Controller
                     ->orWhere('website_url', 'like', "%{$search}%")
                     ->orWhere('account_name', 'like', "%{$search}%")
                     ->orWhere('account_number', 'like', "%{$search}%")
-                    ->orWhereHas('channel.customer', function ($q2) use ($search) {
+                    ->orWhereHas('channel.provider.customerProviders.customer', function ($q2) use ($search) {
                         $q2->where('full_name', 'like', "%{$search}%");
                     })
                     ->orWhereHas('creator', function ($q3) use ($search) {
@@ -50,18 +52,18 @@ class CGamblingDepositController extends Controller
     public function detail($id)
     {
         $gamblingDeposit = GamblingDeposit::with([
-            'channel.customer',
-            'attachments',
-            'logs.changer'
-        ])
-            ->whereHas('channel.customer', function ($q) {
+                'channel.provider.customerProviders.customer',
+                'attachments',
+                'logs.changer'
+            ])
+            ->whereHas('channel.provider.customerProviders.customer', function ($q) {
                 $q->where('user_id', Auth::id());
             })
             ->findOrFail($id);
 
-        $validationStatusCounts = GamblingDeposit::whereHas('channel.customer', function ($q) {
-            $q->where('user_id', Auth::id());
-        })
+        $validationStatusCounts = GamblingDeposit::whereHas('channel.provider.customerProviders.customer', function ($q) {
+                $q->where('user_id', Auth::id());
+            })
             ->selectRaw("report_status, COUNT(*) as count")
             ->groupBy('report_status')
             ->pluck('count', 'report_status')

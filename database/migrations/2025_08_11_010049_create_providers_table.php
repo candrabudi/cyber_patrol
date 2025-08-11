@@ -11,11 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('customers', function (Blueprint $table) {
+        Schema::create('providers', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('full_name');
-            $table->boolean('is_active')->default(false);  // <-- tambah ini
+            $table->string('name');
+            $table->string('provider_code')->nullable();
+            $table->enum('provider_type', ['bank', 'qris', 'pulsa']);
             $table->timestamps();
         });
     }
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('customers');
+        Schema::dropIfExists('providers');
     }
 };

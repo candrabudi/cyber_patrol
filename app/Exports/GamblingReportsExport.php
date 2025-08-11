@@ -38,8 +38,9 @@ class GamblingReportsExport implements FromCollection, WithHeadings, WithStyles,
     {
         $customerId = Auth::user()->customer->id;
 
-        $query = GamblingDeposit::with(['channel', 'attachments'])
-            ->whereHas('channel', function ($q) use ($customerId) {
+        // Gunakan relasi baru
+        $query = GamblingDeposit::with(['channel.provider.customerProviders.customer', 'attachments'])
+            ->whereHas('channel.provider.customerProviders', function ($q) use ($customerId) {
                 $q->where('customer_id', $customerId);
             })
             ->where('report_status', 'approved');
@@ -166,7 +167,6 @@ class GamblingReportsExport implements FromCollection, WithHeadings, WithStyles,
         $sheet->getStyle("A2:U{$highestRow}")->getAlignment()->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER);
     }
 
-
     public function columnWidths(): array
     {
         return [
@@ -196,29 +196,11 @@ class GamblingReportsExport implements FromCollection, WithHeadings, WithStyles,
 
     public function columnFormats(): array
     {
-        return [
-            'A' => NumberFormat::FORMAT_TEXT,
-            'B' => NumberFormat::FORMAT_TEXT,
-            'C' => NumberFormat::FORMAT_TEXT,
-            'D' => NumberFormat::FORMAT_TEXT,
-            'E' => NumberFormat::FORMAT_TEXT,
-            'F' => NumberFormat::FORMAT_TEXT,
-            'G' => NumberFormat::FORMAT_TEXT,
-            'H' => NumberFormat::FORMAT_TEXT,
-            'I' => NumberFormat::FORMAT_TEXT,
-            'J' => NumberFormat::FORMAT_TEXT,
-            'K' => NumberFormat::FORMAT_TEXT,
-            'L' => NumberFormat::FORMAT_TEXT,
-            'M' => NumberFormat::FORMAT_TEXT,
-            'N' => NumberFormat::FORMAT_TEXT,
-            'O' => NumberFormat::FORMAT_TEXT,
-            'P' => NumberFormat::FORMAT_TEXT,
-            'Q' => NumberFormat::FORMAT_TEXT,
-            'R' => NumberFormat::FORMAT_TEXT,
-            'S' => NumberFormat::FORMAT_TEXT,
-            'T' => NumberFormat::FORMAT_TEXT,
-            'U' => NumberFormat::FORMAT_TEXT,
-        ];
+        $formats = [];
+        foreach (range('A', 'U') as $col) {
+            $formats[$col] = NumberFormat::FORMAT_TEXT;
+        }
+        return $formats;
     }
 
     public function registerEvents(): array

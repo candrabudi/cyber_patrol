@@ -7,6 +7,7 @@ use App\Models\Channel;
 use App\Models\ErrorLog;
 use App\Models\GamblingDeposit;
 use App\Models\GamblingDepositAttachment;
+use App\Models\Provider;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -69,6 +70,7 @@ class AGamblingDepositController extends Controller
 
     public function store(Request $request)
     {
+        // return $request;
         try {
             $validated = $request->validate([
                 'website_name' => 'required|string|max:255',
@@ -78,7 +80,7 @@ class AGamblingDepositController extends Controller
                 'account_name' => 'nullable|string|max:255',
                 'account_number' => 'nullable|string|max:50',
                 'website_proofs' => 'required|file|mimes:jpeg,jpg,png,pdf',
-                'account_proofs' => 'required|file|mimes:jpeg,jpg,png,pdf',
+                'account_proofs' => 'nullable|file|mimes:jpeg,jpg,png,pdf',
                 'qris_proofs' => 'nullable|file|mimes:jpeg,jpg,png,pdf',
             ], [
                 'website_name.required' => 'Nama website harus diisi.',
@@ -141,9 +143,38 @@ class AGamblingDepositController extends Controller
                     $deposit->channel_id = null;
                 }
             } else {
-                $deposit->channel_id = $validated['channel_id'];
                 $deposit->account_name = $validated['account_name'] ?? '';
                 $deposit->account_number = $validated['account_number'] ?? '';
+
+                if ($validated['channel_type'] === 'virtual_account' && !empty($deposit->account_number)) {
+                    $prefix4 = substr($deposit->account_number, 0, 4);
+                    $foundChannel = Channel::where('channel_type', 'virtual_account')
+                        ->where('channel_code', $prefix4)
+                        ->first();
+
+                    if ($foundChannel) {
+                        $deposit->channel_id = $foundChannel->id;
+                    } else {
+                        $prefix5 = substr($deposit->account_number, 0, 5);
+                        $foundChannel = Channel::where('channel_type', 'virtual_account')
+                            ->where('channel_code', $prefix5)
+                            ->first();
+
+                        if ($foundChannel) {
+                            $deposit->channel_id = $foundChannel->id;
+                        } else {
+                            $provider = Provider::where('id', $request->channel_id)->first();
+                            $newChannel = Channel::create([
+                                'provider_id'   => $provider ? $provider->id : null,
+                                'channel_type'  => 'virtual_account',
+                                'channel_code'  => $prefix4,
+                            ]);
+                            $deposit->channel_id = $newChannel->id;
+                        }
+                    }
+                } else {
+                    $deposit->channel_id = $validated['channel_id'];
+                }
             }
 
             $deposit->created_by = Auth::id();

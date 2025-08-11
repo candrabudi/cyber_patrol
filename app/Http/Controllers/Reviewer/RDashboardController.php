@@ -10,36 +10,48 @@ class RDashboardController extends Controller
 {
     public function index()
     {
-        // Total gambling deposits
-        $totalDepositsCount = DB::table('gambling_deposits')->count();
+        $totalDepositsCount = DB::table('gambling_deposits')
+            ->join('channels', 'gambling_deposits.channel_id', '=', 'channels.id')
+            ->join('providers', 'channels.provider_id', '=', 'providers.id')
+            ->count();
 
-        // Growth contoh (bandingkan 7 hari terakhir dengan 7 hari sebelumnya)
         $countLast7Days = DB::table('gambling_deposits')
-            ->where('created_at', '>=', now()->subDays(7))
+            ->join('channels', 'gambling_deposits.channel_id', '=', 'channels.id')
+            ->join('providers', 'channels.provider_id', '=', 'providers.id')
+            ->where('gambling_deposits.created_at', '>=', now()->subDays(7))
             ->count();
+
         $countPrev7Days = DB::table('gambling_deposits')
-            ->whereBetween('created_at', [now()->subDays(14), now()->subDays(7)])
+            ->join('channels', 'gambling_deposits.channel_id', '=', 'channels.id')
+            ->join('providers', 'channels.provider_id', '=', 'providers.id')
+            ->whereBetween('gambling_deposits.created_at', [now()->subDays(14), now()->subDays(7)])
             ->count();
+
         $totalDepositsGrowth = $this->calculateGrowth($countLast7Days, $countPrev7Days);
 
-        // Count by report_status
-        $pendingCount = DB::table('gambling_deposits')->where('report_status', 'pending')->count();
-        $approvedCount = DB::table('gambling_deposits')->where('report_status', 'approved')->count();
-        $rejectedCount = DB::table('gambling_deposits')->where('report_status', 'rejected')->count();
+        $pendingCount = $this->countByStatus('pending');
+        $approvedCount = $this->countByStatus('approved');
+        $rejectedCount = $this->countByStatus('rejected');
 
-        // Growth for each status (7 days comparison)
         $pendingGrowth = $this->calculateStatusGrowth('pending');
         $approvedGrowth = $this->calculateStatusGrowth('approved');
         $rejectedGrowth = $this->calculateStatusGrowth('rejected');
 
-        // Solved reports count
-        $solvedCount = DB::table('gambling_deposits')->where('is_solved', true)->count();
+        $solvedCount = DB::table('gambling_deposits')
+            ->join('channels', 'gambling_deposits.channel_id', '=', 'channels.id')
+            ->join('providers', 'channels.provider_id', '=', 'providers.id')
+            ->where('is_solved', true)
+            ->count();
 
-        // Attachments count
-        $attachmentsCount = DB::table('gambling_deposit_attachments')->count();
+        $attachmentsCount = DB::table('gambling_deposit_attachments')
+            ->join('gambling_deposits', 'gambling_deposit_attachments.gambling_deposit_id', '=', 'gambling_deposits.id')
+            ->join('channels', 'gambling_deposits.channel_id', '=', 'channels.id')
+            ->join('providers', 'channels.provider_id', '=', 'providers.id')
+            ->count();
 
-        // Validation status counts
         $validationStatusCounts = DB::table('gambling_deposits')
+            ->join('channels', 'gambling_deposits.channel_id', '=', 'channels.id')
+            ->join('providers', 'channels.provider_id', '=', 'providers.id')
             ->select('account_validation_status', DB::raw('count(*) as total'))
             ->groupBy('account_validation_status')
             ->pluck('total', 'account_validation_status')
@@ -60,24 +72,37 @@ class RDashboardController extends Controller
         ));
     }
 
+    private function countByStatus($status)
+    {
+        return DB::table('gambling_deposits')
+            ->join('channels', 'gambling_deposits.channel_id', '=', 'channels.id')
+            ->join('providers', 'channels.provider_id', '=', 'providers.id')
+            ->where('report_status', $status)
+            ->count();
+    }
+
     private function calculateGrowth($recentCount, $previousCount)
     {
         if ($previousCount == 0) {
             return $recentCount > 0 ? 100 : 0;
         }
-        return (($recentCount - $previousCount) / $previousCount) * 100;
+        return round((($recentCount - $previousCount) / $previousCount) * 100, 2);
     }
 
     private function calculateStatusGrowth($status)
     {
         $countLast7Days = DB::table('gambling_deposits')
+            ->join('channels', 'gambling_deposits.channel_id', '=', 'channels.id')
+            ->join('providers', 'channels.provider_id', '=', 'providers.id')
             ->where('report_status', $status)
-            ->where('created_at', '>=', now()->subDays(7))
+            ->where('gambling_deposits.created_at', '>=', now()->subDays(7))
             ->count();
 
         $countPrev7Days = DB::table('gambling_deposits')
+            ->join('channels', 'gambling_deposits.channel_id', '=', 'channels.id')
+            ->join('providers', 'channels.provider_id', '=', 'providers.id')
             ->where('report_status', $status)
-            ->whereBetween('created_at', [now()->subDays(14), now()->subDays(7)])
+            ->whereBetween('gambling_deposits.created_at', [now()->subDays(14), now()->subDays(7)])
             ->count();
 
         return $this->calculateGrowth($countLast7Days, $countPrev7Days);

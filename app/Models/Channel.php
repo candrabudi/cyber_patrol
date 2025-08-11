@@ -7,14 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 class Channel extends Model
 {
     protected $fillable = [
-        'customer_id',
         'channel_code',
         'channel_type',
+        'provider_id',
     ];
 
-
-    public function customer()
+    public function provider()
     {
-        return $this->belongsTo(Customer::class);
+        return $this->hasOne(Provider::class, 'id', 'provider_id');
     }
 }

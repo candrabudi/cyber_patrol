@@ -1,5 +1,11 @@
 @extends('template.app')
-
+@section('title', 'Tambah Rekening Penampung')
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('template/assets/vendor/libs/select2/select2.css') }}" />
+    <link rel="stylesheet" href="{{ asset('template/assets/vendor/libs/tagify/tagify.css') }}" />
+    <link rel="stylesheet" href="{{ asset('template/assets/vendor/libs/bootstrap-select/bootstrap-select.css') }}" />
+    <link rel="stylesheet" href="{{ asset('template/assets/vendor/libs/typeahead-js/typeahead.css') }}" />
+@endpush
 @section('content')
     <div class="card mb-6">
         <div class="card-header border-bottom">
@@ -15,23 +21,19 @@
                 id="gamblingDepositForm">
                 @csrf
 
-                <!-- Alert container -->
                 <div id="alertContainer"></div>
 
                 <div class="row">
-                    <!-- Kiri -->
                     <div class="col-md-6">
-                        <!-- Nama Website -->
                         <div class="mb-3">
                             <label for="website_name" class="form-label">Nama Website</label>
                             <input type="text" class="form-control" id="website_name" name="website_name" required>
                         </div>
 
-                        <!-- Tipe Channel -->
                         <div class="mb-3">
                             <label for="channel_type" class="form-label">Pilih Tipe Channel</label>
                             <select id="channel_type" name="channel_type" class="form-select" required>
-                                <option value="">-- Pilih Tipe Channel --</option>
+                                <option value="">Pilih Tipe Channel</option>
                                 <option value="transfer">Transfer</option>
                                 <option value="qris">QRIS</option>
                                 <option value="virtual_account">Virtual Account</option>
@@ -39,19 +41,16 @@
                             </select>
                         </div>
 
-                        <!-- Nama Rekening -->
                         <div class="mb-3" id="account_name_div" style="display:none;">
                             <label for="account_name" class="form-label">Nama Rekening</label>
                             <input type="text" class="form-control" id="account_name" name="account_name">
                         </div>
 
-                        <!-- Nomor Rekening / Nomor Handphone -->
                         <div class="mb-3" id="account_number_div" style="display:none;">
                             <label for="account_number" class="form-label">Nomor Rekening / Nomor Handphone</label>
                             <input type="text" class="form-control" id="account_number" name="account_number">
                         </div>
 
-                        <!-- Bukti Website -->
                         <div class="mb-3">
                             <label class="form-label">Bukti Website</label>
                             <input type="file" class="form-control" name="website_proofs"
@@ -59,36 +58,31 @@
                         </div>
                     </div>
 
-                    <!-- Kanan -->
                     <div class="col-md-6">
-                        <!-- URL Website -->
                         <div class="mb-3">
                             <label for="website_url" class="form-label">URL Website</label>
                             <input type="url" class="form-control" id="website_url" name="website_url" required>
                         </div>
 
-                        <!-- Pilih Channel / Provider -->
                         <div class="mb-3" id="channel_select_div" style="display:none;">
                             <label for="channel_id" class="form-label" id="channel_label">Pilih Channel</label>
-                            <select name="channel_id" id="channel_id" class="form-select">
-                                <option value="">-- Pilih Channel --</option>
+                            <select name="channel_id" id="channel_id" class="select2 form-select">
+                                <option value="">Pilih Channel</option>
                                 @foreach ($channels as $channel)
                                     <option value="{{ $channel->id }}" data-type="{{ $channel->channel_type }}"
                                         data-is-bank="{{ $channel->is_bank ?? false }}">
-                                        {{ $channel->customer->full_name }} ({{ $channel->channel_type }})
+                                        {{ $channel->provider->name }}
                                     </option>
                                 @endforeach
                             </select>
                         </div>
 
-                        <!-- Bukti Rekening -->
                         <div class="mb-3" id="account_proofs_div">
                             <label class="form-label">Bukti Rekening</label>
                             <input type="file" class="form-control" name="account_proofs"
                                 accept="image/*,application/pdf" required>
                         </div>
 
-                        <!-- Bukti QRIS -->
                         <div class="mb-3" id="qris_proof_div" style="display:none;">
                             <label class="form-label">Bukti QRIS</label>
                             <input type="file" class="form-control" name="qris_proofs" accept="image/*,application/pdf">
@@ -96,17 +90,39 @@
                     </div>
                 </div>
 
-                <!-- Tombol Submit Full Width -->
                 <div class="mt-3">
                     <button type="submit" class="btn btn-primary" id="submitBtn">Simpan</button>
                 </div>
             </form>
+
         </div>
     </div>
 @endsection
-
 @push('scripts')
+    <script src="{{ asset('template/assets/vendor/libs/select2/select2.js') }}"></script>
+    <script src="{{ asset('template/assets/vendor/libs/tagify/tagify.js') }}"></script>
+    <script src="{{ asset('template/assets/vendor/libs/bootstrap-select/bootstrap-select.js') }}"></script>
+    <script src="{{ asset('template/assets/vendor/libs/typeahead-js/typeahead.js') }}"></script>
+    <script src="{{ asset('template/assets/vendor/libs/bloodhound/bloodhound.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <script>
+        'use strict';
+
+        $(function() {
+            const select2 = $('.select2');
+
+            if (select2.length) {
+                select2.each(function() {
+                    var $this = $(this);
+                    $this.wrap('<div class="position-relative"></div>').select2({
+                        placeholder: 'Select value',
+                        dropdownParent: $this.parent()
+                    });
+                });
+            }
+        });
+    </script>
 
     <script>
         const channelTypeSelect = document.getElementById('channel_type');
@@ -123,18 +139,13 @@
 
         function filterChannelsByType(type) {
             for (let option of channelSelect.options) {
-                if (!option.value) continue; // skip placeholder
+                if (!option.value) continue;
 
-                // Untuk Virtual Account, hanya tampilkan channel yang tipe 'transfer' dan is_bank=true
                 if (type === 'virtual_account') {
-                    const isBank = option.getAttribute('data-is-bank') === '1' || option.getAttribute('data-is-bank') ===
-                        'true';
-                    option.style.display = (option.getAttribute('data-type') === 'transfer' && isBank) ? 'block' : 'none';
+                    option.style.display = (option.getAttribute('data-type') === 'transfer') ? 'block' : 'none';
                 } else if (type === 'pulsa') {
-                    // Pulsa tidak pakai channel, nanti diganti jadi provider — sembunyikan semua channel
                     option.style.display = 'none';
                 } else {
-                    // Tipe lainnya tampilkan channel sesuai type
                     option.style.display = (option.getAttribute('data-type') === type) ? 'block' : 'none';
                 }
             }
@@ -151,8 +162,19 @@
         function updateFormFields(type) {
             resetAccountInputs();
 
+            const accountNumberLabel = accountNumberDiv.querySelector('label.form-label');
+
+            if (type === 'transfer') {
+                accountNumberLabel.textContent = 'Nomor Rekening';
+            } else if (type === 'pulsa') {
+                accountNumberLabel.textContent = 'Nomor Handphone';
+            } else if (type === 'virtual_account') {
+                accountNumberLabel.textContent = 'Nomor BIN (dikasi notes 4-5 digit depan)';
+            } else {
+                accountNumberLabel.textContent = 'Nomor Rekening / Nomor Handphone';
+            }
+
             if (type === 'qris') {
-                // QRIS tidak perlu bukti rekening
                 channelSelectDiv.style.display = 'none';
                 channelSelect.required = false;
 
@@ -166,10 +188,12 @@
                 accountNumberDiv.style.display = 'none';
 
             } else if (type === 'virtual_account' || type === 'transfer') {
-                // Virtual Account pilih channel bank (transfer channel + is_bank)
                 channelSelectDiv.style.display = 'block';
-                channelLabel.textContent = 'Pilih Bank';
                 channelSelect.required = true;
+
+                channelLabel.textContent = 'Pilih Bank';
+                channelSelect.options[0].text = 'Pilih Bank';
+
                 filterChannelsByType(type);
 
                 qrisProofDiv.style.display = 'none';
@@ -179,18 +203,25 @@
                 accountProofsInput.required = true;
                 accountProofsDiv.style.display = 'block';
 
-                accountNameDiv.style.display = 'none';
-                accountNumberDiv.style.display = 'block';
-                accountNumberInput.required = true;
+                if (type === 'transfer') {
+                    accountNameDiv.style.display = 'block';
+                    accountNumberDiv.style.display = 'block';
+                    accountNameInput.required = true;
+                    accountNumberInput.required = true;
+                } else {
+                    accountNameDiv.style.display = 'none';
+                    accountNumberDiv.style.display = 'block';
+                    accountNameInput.required = false;
+                    accountNumberInput.required = true;
+                }
 
             } else if (type === 'pulsa') {
-                // Pulsa pilih provider, bukan channel
                 channelSelectDiv.style.display = 'block';
                 channelLabel.textContent = 'Pilih Provider';
                 channelSelect.required = true;
 
-                // Filter channel select supaya kosong / atau kamu bisa render provider list dari backend yg beda
-                // Untuk contoh ini, kita kosongkan opsi selain placeholder
+                channelSelect.options[0].text = 'Pilih Provider';
+
                 for (let option of channelSelect.options) {
                     if (!option.value) continue;
                     option.style.display = 'none';
@@ -209,10 +240,12 @@
                 accountNumberInput.required = true;
 
             } else {
-                // Tipe transfer dan lainnya
                 channelSelectDiv.style.display = 'block';
                 channelLabel.textContent = 'Pilih Channel';
                 channelSelect.required = true;
+
+                channelSelect.options[0].text = 'Pilih Channel';
+
                 filterChannelsByType(type);
 
                 qrisProofDiv.style.display = 'none';
@@ -222,17 +255,10 @@
                 accountProofsInput.required = true;
                 accountProofsDiv.style.display = 'block';
 
-                if (type === 'transfer' || type === 'ewallet') {
-                    accountNameDiv.style.display = 'block';
-                    accountNumberDiv.style.display = 'block';
-                    accountNameInput.required = true;
-                    accountNumberInput.required = true;
-                } else {
-                    accountNameDiv.style.display = 'none';
-                    accountNumberDiv.style.display = 'none';
-                    accountNameInput.required = false;
-                    accountNumberInput.required = false;
-                }
+                accountNameDiv.style.display = 'none';
+                accountNumberDiv.style.display = 'none';
+                accountNameInput.required = false;
+                accountNumberInput.required = false;
             }
         }
 
@@ -246,7 +272,7 @@
             }
         });
 
-        // ==== Axios submit form ====
+        // Axios form submission handling (tidak berubah)
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('gamblingDepositForm');
             const submitBtn = document.getElementById('submitBtn');
@@ -254,10 +280,10 @@
 
             function showAlert(type, message) {
                 alertContainer.innerHTML = `
-                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                    ${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>`;
+            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>`;
                 alertContainer.scrollIntoView({
                     behavior: 'smooth'
                 });
@@ -266,15 +292,12 @@
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
 
-                // Clear alert
                 alertContainer.innerHTML = '';
 
-                // Disable button + show loading
                 submitBtn.disabled = true;
                 const originalText = submitBtn.textContent;
                 submitBtn.textContent = 'Menyimpan...';
 
-                // FormData karena ada file upload
                 const formData = new FormData(form);
 
                 axios.post(form.action, formData, {
@@ -286,7 +309,6 @@
                         if (response.data.success) {
                             showAlert('success', response.data.message || 'Data berhasil disimpan.');
                             form.reset();
-                            // Reset form fields yang dinamis
                             channelTypeSelect.dispatchEvent(new Event('change'));
                         } else {
                             showAlert('warning', response.data.message || 'Terjadi masalah.');

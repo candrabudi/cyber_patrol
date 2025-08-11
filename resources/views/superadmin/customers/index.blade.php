@@ -1,5 +1,10 @@
 @extends('template.app')
-
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('template/assets/vendor/libs/select2/select2.css') }}" />
+    <link rel="stylesheet" href="{{ asset('template/assets/vendor/libs/tagify/tagify.css') }}" />
+    <link rel="stylesheet" href="{{ asset('template/assets/vendor/libs/bootstrap-select/bootstrap-select.css') }}" />
+    <link rel="stylesheet" href="{{ asset('template/assets/vendor/libs/typeahead-js/typeahead.css') }}" />
+@endpush
 @section('content')
     <div class="card">
         <div class="card-header border-bottom">
@@ -16,8 +21,8 @@
                 <div class="row m-3 my-0 justify-content-between">
                     <div class="d-md-flex justify-content-between align-items-center dt-layout-start col-md-auto me-auto">
                         <div class="dt-length mb-md-6 mb-0">
-                            <select name="DataTables_Table_0_length" aria-controls="DataTables_Table_0" class="form-select ms-0"
-                                id="dt-length-0">
+                            <select name="DataTables_Table_0_length" aria-controls="DataTables_Table_0"
+                                class="form-select ms-0" id="dt-length-0">
                                 <option value="10" selected>10</option>
                                 <option value="25">25</option>
                                 <option value="50">50</option>
@@ -29,7 +34,8 @@
                     <div
                         class="d-md-flex align-items-center dt-layout-end col-md-auto ms-auto d-flex gap-md-4 justify-content-md-between justify-content-center gap-2 flex-wrap">
                         <div class="dt-search"><input type="search" class="form-control" id="dt-search-0"
-                                placeholder="Search User" aria-controls="DataTables_Table_0"><label for="dt-search-0"></label>
+                                placeholder="Search User" aria-controls="DataTables_Table_0"><label
+                                for="dt-search-0"></label>
                         </div>
                         <div class="dt-buttons btn-group flex-wrap d-flex gap-4 mb-md-0 mb-4">
                             <button class="btn add-new btn-primary" tabindex="0" aria-controls="DataTables_Table_0"
@@ -54,18 +60,19 @@
                                 <th>#</th>
                                 <th>Username</th>
                                 <th>Email</th>
-                                <th>Nama Instansi</th>
-                                <th>Tanggal Daftar</th>
+                                <th>Instansi</th>
+                                <th width="100">Master Data</th>
+                                <th>Tgl Daftar</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td colspan="6" class="dt-empty text-center">Loading...</td>
+                                <td colspan="7" class="dt-empty text-center">Loading...</td>
                             </tr>
                         </tbody>
                     </table>
-        
+
                 </div>
             </div>
             <div class="d-flex justify-content-between align-items-center m-3">
@@ -97,9 +104,17 @@
                 </div>
                 <div class="mb-6 form-control-validation fv-plugins-icon-container">
                     <label class="form-label" for="add-user-username">Username</label>
-                    <input type="text" id="add-user-username" class="form-control" name="username" placeholder="johndoe"
-                        required>
+                    <input type="text" id="add-user-username" class="form-control" name="username"
+                        placeholder="johndoe" required>
                     <div class="invalid-feedback"></div>
+                </div>
+                <div class="mb-6 form-control-validation fv-plugins-icon-container">
+                    <label class="form-label" for="add-master-data">Master Data</label>
+                    <select id="add-master-data" name="master_data[]" class="form-select select2" multiple>
+                        @foreach ($providers as $provider)
+                            <option value="{{ $provider->id }}">{{ $provider->name }}</option>
+                        @endforeach
+                    </select>
                 </div>
                 <div class="mb-6 form-control-validation fv-plugins-icon-container">
                     <label class="form-label" for="add-user-password">Password</label>
@@ -144,7 +159,16 @@
                     <div class="invalid-feedback"></div>
                 </div>
                 <div class="mb-6 form-control-validation fv-plugins-icon-container">
-                    <label class="form-label" for="edit-user-password">Password <small>(kosongkan jika tidak dirubah)</small></label>
+                    <label class="form-label" for="edit-master-data">Master Data</label>
+                    <select id="edit-master-data" name="master_data[]" class="form-select select2" multiple>
+                        @foreach ($providers as $provider)
+                            <option value="{{ $provider->id }}">{{ $provider->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="mb-6 form-control-validation fv-plugins-icon-container">
+                    <label class="form-label" for="edit-user-password">Password <small>(kosongkan jika tidak
+                            dirubah)</small></label>
                     <input type="password" id="edit-user-password" class="form-control" name="password"
                         placeholder="********">
                     <div class="invalid-feedback"></div>
@@ -163,9 +187,32 @@
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="{{ asset('template/assets/vendor/libs/select2/select2.js') }}"></script>
+    <script src="{{ asset('template/assets/vendor/libs/tagify/tagify.js') }}"></script>
+    <script src="{{ asset('template/assets/vendor/libs/bootstrap-select/bootstrap-select.js') }}"></script>
+    <script src="{{ asset('template/assets/vendor/libs/typeahead-js/typeahead.js') }}"></script>
+    <script src="{{ asset('template/assets/vendor/libs/bloodhound/bloodhound.js') }}"></script>
+
     <script>
-        axios.defaults.headers.common['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]').getAttribute(
-            'content');
+        'use strict';
+
+        $(function() {
+            const select2 = $('.select2');
+
+            if (select2.length) {
+                select2.each(function() {
+                    var $this = $(this);
+                    $this.wrap('<div class="position-relative"></div>').select2({
+                        placeholder: 'Select value',
+                        dropdownParent: $this.parent()
+                    });
+                });
+            }
+        });
+    </script>
+    <script>
+        axios.defaults.headers.common['X-CSRF-TOKEN'] =
+            document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
         const tableBody = document.querySelector('#DataTables_Table_0 tbody');
         const pagination = document.querySelector('#pagination');
@@ -194,7 +241,7 @@
 
         function fetchCustomers(page = 1) {
             currentPage = page;
-            tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Loading...</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Loading...</td></tr>';
 
             axios.get(`/superadmin/customers/data`, {
                     params: {
@@ -212,7 +259,7 @@
                     } = res.data;
 
                     if (data.length === 0) {
-                        tableBody.innerHTML = '<tr><td colspan="6" class="text-center">No customers found.</td></tr>';
+                        tableBody.innerHTML = '<tr><td colspan="7" class="text-center">No customers found.</td></tr>';
                         pagination.innerHTML = '';
                         infoText.textContent = `Showing 0 to 0 of 0 entries`;
                         return;
@@ -224,19 +271,25 @@
 
                     tableBody.innerHTML = '';
                     data.forEach((customer, index) => {
+                        let providerBadges = customer.providers && customer.providers.length > 0 ?
+                            customer.providers.map(p => `<span class="badge bg-primary me-1 mb-2">${p.name}</span>`)
+                            .join('') :
+                            '<span class="text-muted">-</span>';
+
                         tableBody.innerHTML += `
-                    <tr>
-                        <td>${(current_page - 1) * perPage + index + 1}</td>
-                        <td>${customer.username}</td>
-                        <td>${customer.email}</td>
-                        <td>${customer.full_name}</td>
-                        <td>${customer.register_at ?? '-'}</td>
-                        <td>
-                            <button class="btn btn-sm btn-warning btn-edit" data-id="${customer.id}">Edit</button>
-                            <button class="btn btn-sm btn-danger btn-delete" data-id="${customer.id}">Delete</button>
-                        </td>
-                    </tr>
-                `;
+                            <tr>
+                                <td>${(current_page - 1) * perPage + index + 1}</td>
+                                <td>${customer.username}</td>
+                                <td>${customer.email}</td>
+                                <td>${customer.full_name}</td>
+                                <td>${providerBadges}</td>
+                                <td>${customer.register_at ?? '-'}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-warning btn-edit" data-id="${customer.id}">Edit</button>
+                                    <button class="btn btn-sm btn-danger btn-delete" data-id="${customer.id}">Delete</button>
+                                </td>
+                            </tr>
+                        `;
                     });
 
                     renderPagination(current_page, last_page);
@@ -244,7 +297,7 @@
                 })
                 .catch(err => {
                     tableBody.innerHTML =
-                        `<tr><td colspan="6" class="text-center text-danger">Failed to load data.</td></tr>`;
+                        `<tr><td colspan="7" class="text-center text-danger">Failed to load data.</td></tr>`;
                     pagination.innerHTML = '';
                     infoText.textContent = 'Showing 0 to 0 of 0 entries';
                     console.error(err);
@@ -253,39 +306,31 @@
         }
 
         function renderPagination(currentPage, lastPage) {
-            let html = '';
-
-            html += `
-                <li class="page-item first ${currentPage === 1 ? 'disabled' : ''}">
-                    <a class="page-link waves-effect" href="javascript:void(0);" data-page="first">
-                        <i class="icon-base ti tabler-chevrons-left icon-sm"></i>
-                    </a>
-                </li>
-                <li class="page-item prev ${currentPage === 1 ? 'disabled' : ''}">
-                    <a class="page-link waves-effect" href="javascript:void(0);" data-page="prev">
-                        <i class="icon-base ti tabler-chevron-left icon-sm"></i>
-                    </a>
-               
-                </li>`;
+            let html = `
+            <li class="page-item first ${currentPage === 1 ? 'disabled' : ''}">
+                <a class="page-link" href="javascript:void(0);" data-page="first"><i class="ti tabler-chevrons-left"></i></a>
+            </li>
+            <li class="page-item prev ${currentPage === 1 ? 'disabled' : ''}">
+                <a class="page-link" href="javascript:void(0);" data-page="prev"><i class="ti tabler-chevron-left"></i></a>
+            </li>
+        `;
 
             for (let i = 1; i <= lastPage; i++) {
                 html += `
                 <li class="page-item ${i === currentPage ? 'active' : ''}">
-                    <a class="page-link waves-effect" href="javascript:void(0);" data-page="${i}">${i}</a>
-                </li>`;
+                    <a class="page-link" href="javascript:void(0);" data-page="${i}">${i}</a>
+                </li>
+            `;
             }
 
             html += `
-                <li class="page-item next ${currentPage === lastPage ? 'disabled' : ''}">
-                    <a class="page-link waves-effect" href="javascript:void(0);" data-page="next">
-                        <i class="icon-base ti tabler-chevron-right icon-sm"></i>
-                    </a>
-                </li>
-                <li class="page-item last ${currentPage === lastPage ? 'disabled' : ''}">
-                    <a class="page-link waves-effect" href="javascript:void(0);" data-page="last">
-                        <i class="icon-base ti tabler-chevrons-right icon-sm"></i>
-                    </a>
-                </li>`;
+            <li class="page-item next ${currentPage === lastPage ? 'disabled' : ''}">
+                <a class="page-link" href="javascript:void(0);" data-page="next"><i class="ti tabler-chevron-right"></i></a>
+            </li>
+            <li class="page-item last ${currentPage === lastPage ? 'disabled' : ''}">
+                <a class="page-link" href="javascript:void(0);" data-page="last"><i class="ti tabler-chevrons-right"></i></a>
+            </li>
+        `;
 
             pagination.innerHTML = html;
 
@@ -299,23 +344,21 @@
                     else if (page === 'last') page = lastPage;
                     else page = parseInt(page);
 
-                    if (page !== currentPage) {
-                        fetchCustomers(page);
-                    }
+                    if (page !== currentPage) fetchCustomers(page);
                 });
             });
         }
 
         function attachRowEventListeners() {
             document.querySelectorAll('.btn-edit').forEach(btn => {
-                btn.addEventListener('click', e => {
+                btn.addEventListener('click', () => {
                     const id = btn.getAttribute('data-id');
                     openEditOffcanvas(id);
                 });
             });
 
             document.querySelectorAll('.btn-delete').forEach(btn => {
-                btn.addEventListener('click', e => {
+                btn.addEventListener('click', () => {
                     const id = btn.getAttribute('data-id');
                     deleteCustomer(id);
                 });
@@ -326,11 +369,15 @@
             axios.get(`/superadmin/customers/${id}/show`)
                 .then(res => {
                     const user = res.data;
-                    document.getElementById('edit-user-id').value = user.id;
-                    document.getElementById('edit-user-fullname').value = user.full_name;
-                    document.getElementById('edit-user-email').value = user.email;
-                    document.getElementById('edit-user-username').value = user.username;
-                    document.getElementById('edit-user-password').value = '';
+                    $('#edit-user-id').val(user.id);
+                    $('#edit-user-fullname').val(user.full_name);
+                    $('#edit-user-email').val(user.email);
+                    $('#edit-user-username').val(user.username);
+                    $('#edit-user-password').val('');
+
+                    // Set nilai Select2 Master Data
+                    const select = $('#edit-master-data');
+                    select.val(user.providers.map(p => p.id)).trigger('change');
 
                     const offcanvasEdit = new bootstrap.Offcanvas(document.getElementById('offcanvasEditUser'));
                     offcanvasEdit.show();
@@ -352,7 +399,7 @@
                 confirmButtonText: 'Yes, delete it!'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    axios.delete(`/superadmin/customers/${id}`)
+                    axios.delete(`/superadmin/customers/destroy/${id}`)
                         .then(() => {
                             Swal.fire('Deleted!', 'Pelanggan telah dihapus.', 'success');
                             fetchCustomers(currentPage);
@@ -364,9 +411,9 @@
             });
         }
 
+        // ========== SUBMIT ADD ==========
         addNewUserForm.addEventListener('submit', function(e) {
             e.preventDefault();
-
             setLoading(addSubmitBtn, true, '');
 
             const formData = new FormData(addNewUserForm);
@@ -375,11 +422,11 @@
                 .then(() => {
                     Swal.fire('Success', 'Pelanggan berhasil ditambahkan.', 'success');
                     addNewUserForm.reset();
+                    $('#add-master-data').val(null).trigger('change'); // reset select2
 
                     const offcanvasAdd = bootstrap.Offcanvas.getInstance(document.getElementById(
                         'offcanvasAddUser'));
                     offcanvasAdd.hide();
-
                     fetchCustomers(1);
                 })
                 .catch(err => {
@@ -401,24 +448,15 @@
                 });
         });
 
-        addNewUserForm.querySelectorAll('input').forEach(input => {
-            input.addEventListener('input', () => {
-                input.classList.remove('is-invalid');
-                input.nextElementSibling.textContent = '';
-            });
-        });
-
+        // ========== SUBMIT EDIT ==========
         editUserForm.addEventListener('submit', function(e) {
             e.preventDefault();
-
             setLoading(editSubmitBtn, true, '');
 
             const id = document.getElementById('edit-user-id').value;
             const formData = new FormData(editUserForm);
 
-            if (!formData.get('password')) {
-                formData.delete('password');
-            }
+            if (!formData.get('password')) formData.delete('password');
 
             axios.post(`/superadmin/customers/${id}`, formData, {
                     headers: {
@@ -428,12 +466,11 @@
                 .then(() => {
                     Swal.fire('Success', 'Pelanggan berhasil diubah.', 'success');
                     editUserForm.reset();
+                    $('#edit-master-data').val(null).trigger('change');
 
-                    // Close offcanvas
                     const offcanvasEdit = bootstrap.Offcanvas.getInstance(document.getElementById(
                         'offcanvasEditUser'));
                     offcanvasEdit.hide();
-
                     fetchCustomers(currentPage);
                 })
                 .catch(err => {
@@ -455,13 +492,7 @@
                 });
         });
 
-        editUserForm.querySelectorAll('input').forEach(input => {
-            input.addEventListener('input', () => {
-                input.classList.remove('is-invalid');
-                input.nextElementSibling.textContent = '';
-            });
-        });
-
+        // ========== LISTENERS ==========
         perPageSelect.addEventListener('change', () => {
             perPage = parseInt(perPageSelect.value);
             fetchCustomers(1);

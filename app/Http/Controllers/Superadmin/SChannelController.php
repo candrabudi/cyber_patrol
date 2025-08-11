@@ -5,33 +5,34 @@ namespace App\Http\Controllers\Superadmin;
 use App\Http\Controllers\Controller;
 use App\Models\Channel;
 use App\Models\Customer;
+use App\Models\Provider;
 use Illuminate\Http\Request;
 
 class SChannelController extends Controller
 {
     public function index()
     {
-        $customers = Customer::select('id', 'full_name')->get();
-        return view('superadmin.channels.index', compact('customers'));
+        $providers = Provider::all();
+        return view('superadmin.channels.index', compact('providers'));
     }
 
     public function data(Request $request)
     {
         $perPage = $request->per_page ?? 10;
 
-        $customers = Customer::with('channels')
+        $providers = Provider::with('channels')
             ->when($request->search, function ($query) use ($request) {
-                $query->where('full_name', 'like', '%' . $request->search . '%');
+                $query->where('name', 'like', '%' . $request->search . '%');
             })
             ->paginate($perPage);
 
-        return response()->json($customers);
+        return response()->json($providers);
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'customer_id' => 'required|exists:customers,id',
+            'provider_id' => 'required|exists:providers,id',
             'channel_code' => 'nullable|unique:channels,channel_code',
             'channel_type' => 'required|in:transfer,ewallet,qris,virtual_account,pulsa',
         ]);
@@ -43,7 +44,7 @@ class SChannelController extends Controller
 
     public function show($id)
     {
-        $channel = Channel::with('customer')->findOrFail($id);
+        $channel = Channel::with('provider')->findOrFail($id);
         return response()->json($channel);
     }
 
@@ -52,7 +53,7 @@ class SChannelController extends Controller
         $channel = Channel::findOrFail($id);
 
         $validated = $request->validate([
-            'customer_id' => 'required|exists:customers,id',
+            'provider_id' => 'required|exists:providers,id',
             'channel_code' => 'nullable|unique:channels,channel_code,' . $channel->id,
             'channel_type' => 'required|in:transfer,ewallet,qris,virtual_account,pulsa',
         ]);

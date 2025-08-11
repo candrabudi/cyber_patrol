@@ -1,5 +1,11 @@
 @extends('template.app')
-
+@section('title', 'Data Channel')
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('template/assets/vendor/libs/select2/select2.css') }}" />
+    <link rel="stylesheet" href="{{ asset('template/assets/vendor/libs/tagify/tagify.css') }}" />
+    <link rel="stylesheet" href="{{ asset('template/assets/vendor/libs/bootstrap-select/bootstrap-select.css') }}" />
+    <link rel="stylesheet" href="{{ asset('template/assets/vendor/libs/typeahead-js/typeahead.css') }}" />
+@endpush
 @section('content')
     <div class="card">
         <div class="card-header border-bottom">
@@ -53,7 +59,7 @@
                         <thead class="border-top">
                             <tr>
                                 <th style="width: 50px">#</th>
-                                <th>Channel Pelanggan</th>
+                                <th>Master Data</th>
                                 <th>Channels</th>
                             </tr>
                         </thead>
@@ -83,11 +89,11 @@
         <div class="offcanvas-body mx-0 flex-grow-0 p-6 h-100">
             <form id="addNewChannel" novalidate>
                 <div class="mb-6 form-control-validation fv-plugins-icon-container">
-                    <label class="form-label" for="add-channel-customer">Customer</label>
-                    <select name="customer_id" id="add-channel-customer" class="form-select" required>
-                        <option value="">Pilih Customer</option>
-                        @foreach ($customers as $customer)
-                            <option value="{{ $customer->id }}">{{ $customer->full_name }}</option>
+                    <label class="form-label" for="add-channel-customer">Master Data</label>
+                    <select name="provider_id" id="add-channel-customer" class="select2 form-select" required>
+                        <option value="">Pilih Master Data</option>
+                        @foreach ($providers as $provider)
+                            <option value="{{ $provider->id }}">{{ $provider->name }}</option>
                         @endforeach
                     </select>
                     <div class="invalid-feedback"></div>
@@ -131,11 +137,11 @@
             <form id="editChannelForm" novalidate>
                 <input type="hidden" id="edit-channel-id" name="id" />
                 <div class="mb-6 form-control-validation fv-plugins-icon-container">
-                    <label class="form-label" for="edit-channel-customer">Customer</label>
-                    <select name="customer_id" id="edit-channel-customer" class="form-select" required>
-                        <option value="">Pilih Customer</option>
-                        @foreach ($customers as $customer)
-                            <option value="{{ $customer->id }}">{{ $customer->full_name }}</option>
+                    <label class="form-label" for="edit-channel-customer">Master Data</label>
+                    <select name="provider_id" id="edit-channel-customer" class="form-select" required>
+                        <option value="">Pilih Master Data</option>
+                        @foreach ($providers as $provider)
+                            <option value="{{ $provider->id }}">{{ $provider->name }}</option>
                         @endforeach
                     </select>
                     <div class="invalid-feedback"></div>
@@ -169,36 +175,29 @@
     </div>
 @endsection
 @push('scripts')
+    <script src="{{ asset('template/assets/vendor/libs/select2/select2.js') }}"></script>
+    <script src="{{ asset('template/assets/vendor/libs/tagify/tagify.js') }}"></script>
+    <script src="{{ asset('template/assets/vendor/libs/bootstrap-select/bootstrap-select.js') }}"></script>
+    <script src="{{ asset('template/assets/vendor/libs/typeahead-js/typeahead.js') }}"></script>
+    <script src="{{ asset('template/assets/vendor/libs/bloodhound/bloodhound.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
-        function toggleChannelCodeInput(selectElement, codeInputWrapper) {
-            const value = selectElement.value;
-            if (value === 'transfer' || value === 'pulsa') {
-                codeInputWrapper.style.display = 'none';
-                codeInputWrapper.querySelector('input').value = '';
-            } else {
-                codeInputWrapper.style.display = 'block';
+        'use strict';
+
+        $(function() {
+            const select2 = $('.select2');
+
+            if (select2.length) {
+                select2.each(function() {
+                    var $this = $(this);
+                    $this.wrap('<div class="position-relative"></div>').select2({
+                        placeholder: 'Select value',
+                        dropdownParent: $this.parent()
+                    });
+                });
             }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const addTypeSelect = document.getElementById('add-channel-type');
-            const addCodeWrapper = document.getElementById('add-channel-code').closest('.mb-6');
-
-            addTypeSelect.addEventListener('change', () => {
-                toggleChannelCodeInput(addTypeSelect, addCodeWrapper);
-            });
-            toggleChannelCodeInput(addTypeSelect, addCodeWrapper);
-
-            const editTypeSelect = document.getElementById('edit-channel-type');
-            const editCodeWrapper = document.getElementById('edit-channel-code').closest('.mb-6');
-
-            editTypeSelect.addEventListener('change', () => {
-                toggleChannelCodeInput(editTypeSelect, editCodeWrapper);
-            });
-            toggleChannelCodeInput(editTypeSelect, editCodeWrapper);
         });
     </script>
     <script>
@@ -298,7 +297,7 @@
                         tableBody.innerHTML += `
                             <tr class="align-middle">
                                 <td>${(current_page - 1) * perPage + index + 1}</td>
-                                <td><strong>${customer.full_name}</strong></td>
+                                <td><strong>${customer.name}</strong></td>
                                 <td>${channelsHtml}</td>
                             </tr>
                         `;
@@ -322,38 +321,80 @@
             let html = '';
 
             html += `
-                <li class="page-item first ${currentPage === 1 ? 'disabled' : ''}">
-                    <a class="page-link waves-effect" href="javascript:void(0);" data-page="first">
-                        <i class="icon-base ti tabler-chevrons-left icon-sm"></i>
-                    </a>
-                </li>
-                <li class="page-item prev ${currentPage === 1 ? 'disabled' : ''}">
-                    <a class="page-link waves-effect" href="javascript:void(0);" data-page="prev">
-                        <i class="icon-base ti tabler-chevron-left icon-sm"></i>
-                    </a>
-                </li>
-            `;
+        <li class="page-item first ${currentPage === 1 ? 'disabled' : ''}">
+            <a class="page-link waves-effect" href="javascript:void(0);" data-page="first">
+                <i class="icon-base ti tabler-chevrons-left icon-sm"></i>
+            </a>
+        </li>
+        <li class="page-item prev ${currentPage === 1 ? 'disabled' : ''}">
+            <a class="page-link waves-effect" href="javascript:void(0);" data-page="prev">
+                <i class="icon-base ti tabler-chevron-left icon-sm"></i>
+            </a>
+        </li>
+    `;
 
-            for (let i = 1; i <= lastPage; i++) {
-                html += `
-                    <li class="page-item ${i === currentPage ? 'active' : ''}">
-                        <a class="page-link waves-effect" href="javascript:void(0);" data-page="${i}">${i}</a>
-                    </li>
-                `;
+            function addPage(i) {
+                return `
+            <li class="page-item ${i === currentPage ? 'active' : ''}">
+                <a class="page-link waves-effect" href="javascript:void(0);" data-page="${i}">${i}</a>
+            </li>
+        `;
+            }
+
+            function addEllipsis() {
+                return `
+            <li class="page-item disabled">
+                <span class="page-link">...</span>
+            </li>
+        `;
+            }
+
+            if (lastPage <= 7) {
+                for (let i = 1; i <= lastPage; i++) {
+                    html += addPage(i);
+                }
+            } else {
+                for (let i = 1; i <= 3; i++) {
+                    html += addPage(i);
+                }
+
+                let startMiddle = currentPage - 1;
+                let endMiddle = currentPage + 1;
+
+                if (startMiddle < 4) startMiddle = 4;
+                if (endMiddle > lastPage - 3) endMiddle = lastPage - 3;
+
+                if (startMiddle > 4) {
+                    html += addEllipsis();
+                }
+
+                for (let i = startMiddle; i <= endMiddle; i++) {
+                    if (i > 3 && i < lastPage - 2) {
+                        html += addPage(i);
+                    }
+                }
+
+                if (endMiddle < lastPage - 3) {
+                    html += addEllipsis();
+                }
+
+                for (let i = lastPage - 2; i <= lastPage; i++) {
+                    html += addPage(i);
+                }
             }
 
             html += `
-                <li class="page-item next ${currentPage === lastPage ? 'disabled' : ''}">
-                    <a class="page-link waves-effect" href="javascript:void(0);" data-page="next">
-                        <i class="icon-base ti tabler-chevron-right icon-sm"></i>
-                    </a>
-                </li>
-                <li class="page-item last ${currentPage === lastPage ? 'disabled' : ''}">
-                    <a class="page-link waves-effect" href="javascript:void(0);" data-page="last">
-                        <i class="icon-base ti tabler-chevrons-right icon-sm"></i>
-                    </a>
-                </li>
-            `;
+        <li class="page-item next ${currentPage === lastPage ? 'disabled' : ''}">
+            <a class="page-link waves-effect" href="javascript:void(0);" data-page="next">
+                <i class="icon-base ti tabler-chevron-right icon-sm"></i>
+            </a>
+        </li>
+        <li class="page-item last ${currentPage === lastPage ? 'disabled' : ''}">
+            <a class="page-link waves-effect" href="javascript:void(0);" data-page="last">
+                <i class="icon-base ti tabler-chevrons-right icon-sm"></i>
+            </a>
+        </li>
+    `;
 
             pagination.innerHTML = html;
 
@@ -373,6 +414,37 @@
                 });
             });
         }
+
+
+
+        function toggleChannelCodeInput(selectElement, codeInputWrapper) {
+            const value = selectElement.value;
+            if (value === 'transfer' || value === 'pulsa') {
+                codeInputWrapper.style.display = 'none';
+                codeInputWrapper.querySelector('input').value = '';
+            } else {
+                codeInputWrapper.style.display = 'block';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const addTypeSelect = document.getElementById('add-channel-type');
+            const addCodeWrapper = document.getElementById('add-channel-code').closest('.mb-6');
+
+            addTypeSelect.addEventListener('change', () => {
+                toggleChannelCodeInput(addTypeSelect, addCodeWrapper);
+            });
+            toggleChannelCodeInput(addTypeSelect, addCodeWrapper);
+
+            const editTypeSelect = document.getElementById('edit-channel-type');
+            const editCodeWrapper = document.getElementById('edit-channel-code').closest('.mb-6');
+
+            editTypeSelect.addEventListener('change', () => {
+                toggleChannelCodeInput(editTypeSelect, editCodeWrapper);
+            });
+            toggleChannelCodeInput(editTypeSelect, editCodeWrapper);
+        });
+
 
         function attachRowEventListeners() {
             document.querySelectorAll('.btn-edit').forEach(btn => {
@@ -405,7 +477,7 @@
                 .then(res => {
                     const channel = res.data;
                     document.getElementById('edit-channel-id').value = channel.id;
-                    document.getElementById('edit-channel-customer').value = channel.customer_id;
+                    document.getElementById('edit-channel-customer').value = channel.provider_id;
                     document.getElementById('edit-channel-type').value = channel.channel_type;
                     document.getElementById('edit-channel-code').value = channel.channel_code || '';
 

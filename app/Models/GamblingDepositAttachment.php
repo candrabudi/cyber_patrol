@@ -11,9 +11,4 @@ class GamblingDepositAttachment extends Model
         'attachment_type',
         'file_path',
     ];
-
-    public function gamblingDeposit()
-    {
-        return $this->belongsTo(GamblingDeposit::class);
-    }
 }

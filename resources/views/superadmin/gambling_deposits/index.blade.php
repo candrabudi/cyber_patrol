@@ -56,7 +56,7 @@
                                 <th>Website</th>
                                 <th>URL</th>
                                 <th>Tipe</th>
-                                <th>Customer</th>
+                                <th>Provider</th>
                                 <th>Pemilik Akun</th>
                                 <th>Nomor Akun</th>
                                 <th>Kreator</th>
@@ -161,7 +161,7 @@
                         <td>${item.website_name}</td>
                         <td><a href="${item.website_url}" target="_blank" rel="noopener">${item.website_url}</a></td>
                         <td>${formatChannelType(item.channel.channel_type)}</td>
-                        <td>${item.channel.customer.full_name}</td>
+                        <td>${item.channel.provider.name}</td>
                         <td>${item.account_name}</td>
                         <td>${item.account_number}</td>
                         <td>${item.creator?.username ?? 'Unknown'}</td>

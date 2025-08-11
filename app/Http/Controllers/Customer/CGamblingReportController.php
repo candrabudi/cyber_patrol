@@ -20,8 +20,9 @@ class CGamblingReportController extends Controller
     {
         $customerId = Auth::user()->customer->id;
 
-        $query = GamblingDeposit::with('channel')
-            ->whereHas('channel', function ($q) use ($customerId) {
+        // Menggunakan relasi baru untuk filter berdasarkan customer
+        $query = GamblingDeposit::with('channel.provider.customerProviders.customer')
+            ->whereHas('channel.provider.customerProviders', function ($q) use ($customerId) {
                 $q->where('customer_id', $customerId);
             })
             ->where('report_status', 'approved');
@@ -49,8 +50,7 @@ class CGamblingReportController extends Controller
         $perPage = $request->get('per_page', 10);
         $perPage = $perPage === 'all' ? $query->count() : (int) $perPage;
 
-        $data = $query->orderBy('created_at', 'desc')
-            ->paginate($perPage);
+        $data = $query->orderBy('created_at', 'desc')->paginate($perPage);
 
         return response()->json($data);
     }

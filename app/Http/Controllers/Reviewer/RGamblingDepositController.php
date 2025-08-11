@@ -3,15 +3,9 @@
 namespace App\Http\Controllers\Reviewer;
 
 use App\Http\Controllers\Controller;
-use App\Models\Channel;
-use App\Models\ErrorLog;
 use App\Models\GamblingDeposit;
-use App\Models\GamblingDepositAttachment;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
-use Zxing\QrReader;
 
 class RGamblingDepositController extends Controller
 {
@@ -19,13 +13,17 @@ class RGamblingDepositController extends Controller
     {
         return view('reviewer.gambling_deposits.index');
     }
+
     public function data(Request $request)
     {
         $perPage = $request->get('per_page', 10);
-        $search = $request->get('search', '');
-        $status = $request->get('status', 'all');
+        $search  = $request->get('search', '');
+        $status  = $request->get('status', 'all');
 
-        $query = GamblingDeposit::with(['channel.customer', 'creator']);
+        $query = GamblingDeposit::with([
+            'channel.provider.customerProviders.customer',
+            'creator'
+        ]);
 
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -33,7 +31,7 @@ class RGamblingDepositController extends Controller
                     ->orWhere('website_url', 'like', "%{$search}%")
                     ->orWhere('account_name', 'like', "%{$search}%")
                     ->orWhere('account_number', 'like', "%{$search}%")
-                    ->orWhereHas('channel.customer', function ($q2) use ($search) {
+                    ->orWhereHas('channel.provider.customerProviders.customer', function ($q2) use ($search) {
                         $q2->where('full_name', 'like', "%{$search}%");
                     })
                     ->orWhereHas('creator', function ($q3) use ($search) {
@@ -51,15 +49,13 @@ class RGamblingDepositController extends Controller
         return response()->json($data);
     }
 
-
     public function edit($id)
     {
         $gamblingDeposit = GamblingDeposit::with([
-            'channel',
+            'channel.provider.customerProviders.customer',
             'attachments',
             'logs.changer'
-        ])
-            ->findOrFail($id);
+        ])->findOrFail($id);
 
         return view('reviewer.gambling_deposits.edit', compact('gamblingDeposit'));
     }
@@ -104,12 +100,7 @@ class RGamblingDepositController extends Controller
 
         if (!empty($changes)) {
             foreach ($changes as $log) {
-                $gamblingDeposit->logs()->create([
-                    'field_changed' => $log['field_changed'],
-                    'old_value' => $log['old_value'],
-                    'new_value' => $log['new_value'],
-                    'changed_by' => $log['changed_by'],
-                ]);
+                $gamblingDeposit->logs()->create($log);
             }
         }
 

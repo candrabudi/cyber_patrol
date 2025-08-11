@@ -6,17 +6,16 @@ use Illuminate\Database\Eloquent\Model;
 
 class Customer extends Model
 {
-    protected $fillable = [
-        'user_id',
-        'full_name',
-    ];
+    protected $fillable = ['user_id', 'full_name', 'is_active'];
+
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    public function channels()
+    public function providers()
     {
-        return $this->hasMany(Channel::class);
+        return $this->belongsToMany(Provider::class, 'customer_providers', 'customer_id', 'provider_id')
+            ->withTimestamps();
     }
 }

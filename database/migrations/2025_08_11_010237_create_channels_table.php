@@ -13,10 +13,9 @@ return new class extends Migration
     {
         Schema::create('channels', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('customer_id');
-            $table->foreign('customer_id')->references('id')->on('customers')->onDelete('cascade');
-            $table->string('channel_code')->nullable()->unique();
-            $table->enum('channel_type', ['bank', 'ewallet', 'qris', 'virtual_account', 'pulsa']);
+            $table->string('channel_code')->unique()->nullable();
+            $table->enum('channel_type', ['transfer', 'qris', 'virtual_account', 'pulsa']);
+            $table->foreignId('provider_id')->constrained('providers')->onDelete('cascade');
             $table->timestamps();
         });
     }
