@@ -20,6 +20,13 @@ return new class extends Migration
             $table->boolean('is_confirmed_gambling')->default(false);
             $table->boolean('is_accessible')->default(false);
 
+            // Customer Relation (nullable)
+            $table->unsignedBigInteger('customer_id')->nullable();
+            $table->foreign('customer_id')
+                ->references('id')
+                ->on('customers')
+                ->onDelete('set null');
+
             // Payment Account Information
             $table->foreignId('channel_id')->constrained('channels')->onDelete('cascade');
             $table->string('account_number');
@@ -41,6 +48,9 @@ return new class extends Migration
             // Additional
             $table->boolean('is_solved')->default(false);
             $table->text('remarks')->nullable();
+
+            // Membership Flag
+            $table->boolean('is_non_member')->default(false);
 
             // Audit
             $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
