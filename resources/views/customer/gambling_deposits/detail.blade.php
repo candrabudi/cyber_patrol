@@ -5,7 +5,7 @@
         <!-- Header -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h4 class="fw-bold mb-0">Detail Rekening Penampung</h4>
-            <a href="{{ route('admin.gambling_deposits.index') }}" class="btn btn-secondary">
+            <a href="{{ route('customer.gambling_deposits.index') }}" class="btn btn-secondary">
                 <i class="bi bi-arrow-left me-1"></i> Kembali
             </a>
         </div>

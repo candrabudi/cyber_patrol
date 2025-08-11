@@ -28,7 +28,7 @@ return new class extends Migration
                 ->onDelete('set null');
 
             // Payment Account Information
-            $table->foreignId('channel_id')->nullable()->constrained('channels')->onDelete('cascade');
+            $table->foreignId('channel_id')->nullable()->constrained('channels')->onDelete('set null');
             $table->string('account_number');
             $table->string('account_name');
 
@@ -53,7 +53,8 @@ return new class extends Migration
             $table->boolean('is_non_member')->default(false);
 
             // Audit
-            $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
+            $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
+
             $table->timestamps();
         });
     }
