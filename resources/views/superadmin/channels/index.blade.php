@@ -104,6 +104,17 @@
                     </select>
                     <div class="invalid-feedback"></div>
                 </div>
+
+                <div class="mb-6" id="add-bank-select-wrapper" style="display: none;">
+                    <label for="add-bank-select">Bank</label>
+                    <select id="add-bank-select" name="bank_code" class="form-control">
+                        <option value="">Pilih Bank</option>
+                        @foreach ($banks as $bank)
+                            <option value="{{ $bank->id }}">{{ $bank->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
                 <div class="mb-6 form-control-validation fv-plugins-icon-container">
                     <label class="form-label" for="add-channel-code">Kode Channel</label>
                     <input type="text" id="add-channel-code" class="form-control" name="channel_code"
@@ -119,7 +130,6 @@
             </form>
         </div>
     </div>
-
 
     <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasEditChannel"
         aria-labelledby="offcanvasEditChannelLabel">
@@ -152,6 +162,17 @@
                     </select>
                     <div class="invalid-feedback"></div>
                 </div>
+
+                <div class="mb-6" id="edit-bank-select-wrapper" style="display: none;">
+                    <label for="edit-bank-select">Bank</label>
+                    <select id="edit-bank-select" name="bank_code" class="form-control">
+                        <option value="">Pilih Bank</option>
+                        @foreach ($banks as $bank)
+                            <option value="{{ $bank->id }}">{{ $bank->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
                 <div class="mb-6 form-control-validation fv-plugins-icon-container">
                     <label class="form-label" for="edit-channel-code">Kode Channel</label>
                     <input type="text" id="edit-channel-code" class="form-control" name="channel_code"
@@ -171,36 +192,6 @@
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-    <script>
-        function toggleChannelCodeInput(selectElement, codeInputWrapper) {
-            const value = selectElement.value;
-            if (value === 'transfer' || value === 'pulsa') {
-                codeInputWrapper.style.display = 'none';
-                codeInputWrapper.querySelector('input').value = '';
-            } else {
-                codeInputWrapper.style.display = 'block';
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const addTypeSelect = document.getElementById('add-channel-type');
-            const addCodeWrapper = document.getElementById('add-channel-code').closest('.mb-6');
-
-            addTypeSelect.addEventListener('change', () => {
-                toggleChannelCodeInput(addTypeSelect, addCodeWrapper);
-            });
-            toggleChannelCodeInput(addTypeSelect, addCodeWrapper);
-
-            const editTypeSelect = document.getElementById('edit-channel-type');
-            const editCodeWrapper = document.getElementById('edit-channel-code').closest('.mb-6');
-
-            editTypeSelect.addEventListener('change', () => {
-                toggleChannelCodeInput(editTypeSelect, editCodeWrapper);
-            });
-            toggleChannelCodeInput(editTypeSelect, editCodeWrapper);
-        });
-    </script>
     <script>
         axios.defaults.headers.common['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]').getAttribute(
             'content');
@@ -373,6 +364,50 @@
                 });
             });
         }
+
+
+        function toggleChannelCodeInput(selectElement, codeInputWrapper) {
+            const value = selectElement.value;
+            if (value === 'transfer' || value === 'pulsa') {
+                codeInputWrapper.style.display = 'none';
+                codeInputWrapper.querySelector('input').value = '';
+            } else {
+                codeInputWrapper.style.display = 'block';
+            }
+        }
+
+        function toggleBankSelect(selectElement, bankWrapper) {
+            if (selectElement.value === 'virtual_account') {
+                bankWrapper.style.display = 'block';
+            } else {
+                bankWrapper.style.display = 'none';
+                bankWrapper.querySelector('select').value = '';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const addTypeSelect = document.getElementById('add-channel-type');
+            const addCodeWrapper = document.getElementById('add-channel-code').closest('.mb-6');
+            const addBankWrapper = document.getElementById('add-bank-select-wrapper');
+
+            addTypeSelect.addEventListener('change', () => {
+                toggleChannelCodeInput(addTypeSelect, addCodeWrapper);
+                toggleBankSelect(addTypeSelect, addBankWrapper);
+            });
+            toggleChannelCodeInput(addTypeSelect, addCodeWrapper);
+            toggleBankSelect(addTypeSelect, addBankWrapper);
+
+            const editTypeSelect = document.getElementById('edit-channel-type');
+            const editCodeWrapper = document.getElementById('edit-channel-code').closest('.mb-6');
+            const editBankWrapper = document.getElementById('edit-bank-select-wrapper');
+
+            editTypeSelect.addEventListener('change', () => {
+                toggleChannelCodeInput(editTypeSelect, editCodeWrapper);
+                toggleBankSelect(editTypeSelect, editBankWrapper);
+            });
+            toggleChannelCodeInput(editTypeSelect, editCodeWrapper);
+            toggleBankSelect(editTypeSelect, editBankWrapper);
+        });
 
         function attachRowEventListeners() {
             document.querySelectorAll('.btn-edit').forEach(btn => {

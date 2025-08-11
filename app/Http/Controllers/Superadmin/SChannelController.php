@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Superadmin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Bank;
 use App\Models\Channel;
 use App\Models\Customer;
 use Illuminate\Http\Request;
@@ -12,7 +13,8 @@ class SChannelController extends Controller
     public function index()
     {
         $customers = Customer::select('id', 'full_name')->get();
-        return view('superadmin.channels.index', compact('customers'));
+        $banks = Bank::all();
+        return view('superadmin.channels.index', compact('customers', 'banks'));
     }
 
     public function data(Request $request)
