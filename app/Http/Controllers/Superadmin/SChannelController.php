@@ -10,6 +10,7 @@ use App\Models\GamblingDeposit;
 use App\Models\GamblingDepositAccount;
 use App\Models\Provider;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class SChannelController extends Controller
