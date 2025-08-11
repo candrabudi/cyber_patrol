@@ -76,7 +76,7 @@ class SChannelController extends Controller
             if ($gamblingDepositIds->isNotEmpty()) {
                 GamblingDeposit::whereIn('id', $gamblingDepositIds)
                     ->update([
-                        'channel_id' => $channel,
+                        'channel_id' => $channel->id,
                         'is_non_member' => 0,
                     ]);
             }
@@ -90,7 +90,7 @@ class SChannelController extends Controller
             if ($gamblingDepositIds->isNotEmpty()) {
                 GamblingDeposit::whereIn('id', $gamblingDepositIds)
                     ->update([
-                        'channel_id' => $channel,
+                        'channel_id' => $channel->id,
                         'is_non_member' => 0,
                     ]);
             }
@@ -104,7 +104,7 @@ class SChannelController extends Controller
             if ($gamblingDepositIds->isNotEmpty()) {
                 GamblingDeposit::whereIn('id', $gamblingDepositIds)
                     ->update([
-                        'channel_id' => $channel,
+                        'channel_id' => $channel->id,
                         'is_non_member' => 0,
                     ]);
             }
@@ -119,7 +119,7 @@ class SChannelController extends Controller
             if ($gamblingDepositIds->isNotEmpty()) {
                 GamblingDeposit::whereIn('id', $gamblingDepositIds)
                     ->update([
-                        'channel_id' => $channel,
+                        'channel_id' => $channel->id,
                         'is_non_member' => 0,
                     ]);
             }
@@ -165,7 +165,7 @@ class SChannelController extends Controller
             if ($gamblingDepositIds->isNotEmpty()) {
                 GamblingDeposit::whereIn('id', $gamblingDepositIds)
                     ->update([
-                        'channel_id' => $channel,
+                        'channel_id' => $channel->id,
                         'is_non_member' => 0,
                     ]);
             }
@@ -179,7 +179,7 @@ class SChannelController extends Controller
             if ($gamblingDepositIds->isNotEmpty()) {
                 GamblingDeposit::whereIn('id', $gamblingDepositIds)
                     ->update([
-                        'channel_id' => $channel,
+                        'channel_id' => $channel->id,
                         'is_non_member' => 0,
                     ]);
             }
@@ -193,7 +193,7 @@ class SChannelController extends Controller
             if ($gamblingDepositIds->isNotEmpty()) {
                 GamblingDeposit::whereIn('id', $gamblingDepositIds)
                     ->update([
-                        'channel_id' => $channel,
+                        'channel_id' => $channel->id,
                         'is_non_member' => 0,
                     ]);
             }
@@ -208,7 +208,7 @@ class SChannelController extends Controller
             if ($gamblingDepositIds->isNotEmpty()) {
                 GamblingDeposit::whereIn('id', $gamblingDepositIds)
                     ->update([
-                        'channel_id' => $channel,
+                        'channel_id' => $channel->id,
                         'is_non_member' => 0,
                     ]);
             }
