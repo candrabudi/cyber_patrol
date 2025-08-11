@@ -1,0 +1,119 @@
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+
+class NnsSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void
+    {
+        $banks = [
+            "93600000" => "Jalin",
+            "93600002" => "BRI",
+            "93600008" => "Mandiri",
+            "93600009" => "BNI",
+            "93600011" => "Danamon",
+            "93600013" => "Permata",
+            "93600014" => "BCA",
+            "93600016" => "GOPAY",
+            "93600019" => "Bank Panin",
+            "93600022" => "CIMB",
+            "93600023" => "UOB",
+            "93600028" => "OCBC NISP",
+            "93600054" => "Bank Capital",
+            "93600110" => "Bank BJB",
+            "93600111" => "Bank DKI",
+            "93600112" => "BPD DIY",
+            "93600113" => "Bank Jateng",
+            "93600114" => "BPDJatim",
+            "93600115" => "BPD Jambi",
+            "93600118" => "Bank Nagari",
+            "93600121" => "Bank Lampung",
+            "93600122" => "BANK KALSEL",
+            "93600126" => "Bank Selsulbar",
+            "93600129" => "BPDBali",
+            "93600130" => "BPD NTT",
+            "93600131" => "BPD Maluku & Maluku Utara",
+            "93600137" => "Jawara Mobile",
+            "93600146" => "Bank of India",
+            "93600147" => "Bank Muamalat",
+            "93600152" => "Bank Shinhan",
+            "93600153" => "Sinarmas",
+            "93600167" => "Bank QNB Indonesia",
+            "93600200" => "BTN",
+            "93600212" => "Bank Woori Saudara",
+            "93600213" => "BTPN (Jenius)",
+            "93600422" => "BRI Syariah",
+            "93600426" => "MEGA",
+            "93600451" => "BSM",
+            "93600484" => "Hanna Bank",
+            "93600485" => "Motion Banking",
+            "93600490" => "Bank Neo",
+            "93600501" => "Bank Digital BCA",
+            "93600503" => "Nobu",
+            "93600517" => "Bank Panin Dubai Syariah",
+            "93600523" => "Bank Sehat Sampoerna",
+            "93600535" => "SEABANK",
+            "93600547" => "Bank BTPN Syariah",
+            "93600555" => "PT Bank Index Selindo",
+            "93600562" => "Superbank",
+            "93600564" => "Bank Mantap",
+            "93600566" => "PT Bank Victoria International",
+            "93600567" => "Allo Bank",
+            "93600688" => "BPRKS",
+            "93600689" => "BPRS Hijra",
+            "93600690" => "BANK EKA",
+            "93600777" => "Finnet",
+            "93600808" => "bayarind",
+            "93600811" => "Ottocash",
+            "93600812" => "Kaspro",
+            "93600814" => "Netzme",
+            "93600815" => "Bimasakti",
+            "93600816" => "SPIN (MNC)",
+            "93600817" => "Yukk",
+            "93600818" => "Paydia",
+            "93600822" => "Astrapay",
+            "93600825" => "Zipay",
+            "93600831" => "INACASH",
+            "93600835" => "Virgo",
+            "93600836" => "Nusapay",
+            "93600838" => "Dutamoney",
+            "93600845" => "Pakai Donk",
+            "93600848" => "xendit",
+            "93600849" => "Paylabs",
+            "93600898" => "TMoney",
+            "93600899" => "Doku",
+            "93600911" => "LinkAja",
+            "93600912" => "OVO",
+            "93600914" => "GOPAY",
+            "93600915" => "Dana",
+            "93600916" => "Gudang Voucher",
+            "93600917" => "Paytren",
+            "93600918" => "Shopeepay",
+            "93600919" => "Bluepay",
+            "93600920" => "Isaku",
+            "93600921" => "Saldomu",
+            "93600923" => "Yourpay",
+            "93600947" => "Bank Aladin Syariah",
+            "93600949" => "Bank CTBC Indonesia",
+            "93600950" => "Bank Commonwealth",
+            "93600998" => "QRIS DSP"
+        ];
+
+
+        foreach ($banks as $code => $name) {
+            DB::table('nns')->insert([
+                'name' => $name,
+                'code' => $code,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+    }
+}
