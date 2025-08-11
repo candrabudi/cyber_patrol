@@ -16,7 +16,7 @@
             </div>
         </div>
         <div class="card-body mt-6">
-            <form action="{{ route('superadmin.gambling_deposits.store') }}" method="POST" enctype="multipart/form-data"
+            <form action="{{ route('admin.gambling_deposits.store') }}" method="POST" enctype="multipart/form-data"
                 id="gamblingDepositForm">
                 @csrf
 

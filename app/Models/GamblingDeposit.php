@@ -56,4 +56,8 @@ class GamblingDeposit extends Model
     {
         return $this->hasMany(GamblingDepositAccount::class);
     }
+    public function gamblingDepositAccount()
+    {
+        return $this->hasOne(GamblingDepositAccount::class);
+    }
 }

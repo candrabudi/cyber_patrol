@@ -88,7 +88,8 @@ class SGamblingDepositController extends Controller
         $gamblingDeposit = GamblingDeposit::with([
             'channel',
             'attachments',
-            'logs.changer'
+            'logs.changer',
+            'gamblingDepositAccount'
         ])->findOrFail($id);
 
         return view('superadmin.gambling_deposits.detail', compact('gamblingDeposit'));
