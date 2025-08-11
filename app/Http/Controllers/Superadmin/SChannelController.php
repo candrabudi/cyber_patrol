@@ -51,7 +51,9 @@ class SChannelController extends Controller
         $channel = new Channel();
         $channel->customer_id = $validated['customer_id'];
         $channel->channel_name = $bank ? $bank->name : $customer->full_name;
-        $channel->channel_code = $validated['channel_code'] ?? $bank->code;
+        if ($request->type == "virtual_account" || $request->type == "transfer") {
+            $channel->channel_code = $validated['channel_code'] ?? $bank->code;
+        }
         $channel->channel_type = $validated['channel_type'];
         $channel->save();
 
@@ -71,7 +73,9 @@ class SChannelController extends Controller
             ->first();
         $channel->customer_id = $validated['customer_id'];
         $channel->channel_name = $bank ? $bank->name : $customer->full_name;
-        $channel->channel_code = $validated['channel_code'] ?? $bank->code;
+        if ($request->type == "virtual_account" || $request->type == "transfer") {
+            $channel->channel_code = $validated['channel_code'] ?? $bank->code;
+        }
         $channel->channel_type = $validated['channel_type'];
         $channel->save();
 
