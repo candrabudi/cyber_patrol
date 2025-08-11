@@ -352,7 +352,7 @@
                 confirmButtonText: 'Yes, delete it!'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    axios.delete(`/superadmin/customers/${id}`)
+                    axios.delete(`/superadmin/customers/destroy/${id}`)
                         .then(() => {
                             Swal.fire('Deleted!', 'Pelanggan telah dihapus.', 'success');
                             fetchCustomers(currentPage);

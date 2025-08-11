@@ -266,7 +266,7 @@ class SGamblingDepositController extends Controller
 
                     if ($provider) {
                         $foundChannel = Channel::where('channel_name', $provider->name)
-                            ->where('channel_code', 'like', $accountNumber . '%')
+                            ->whereJsonContains('channel_code', $prefix4)
                             ->first();
 
                         if ($foundChannel) {
