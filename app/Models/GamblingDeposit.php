@@ -11,6 +11,7 @@ class GamblingDeposit extends Model
         'website_url',
         'is_confirmed_gambling',
         'is_accessible',
+        'customer_id',
         'channel_id',
         'account_number',
         'account_name',
@@ -23,6 +24,7 @@ class GamblingDeposit extends Model
         'report_status',
         'is_solved',
         'remarks',
+        'is_non_member',
         'created_by',
     ];
     public function channel()
@@ -43,5 +45,15 @@ class GamblingDeposit extends Model
     public function logs()
     {
         return $this->hasMany(GamblingDepositLog::class);
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
+    public function gamblingDepositAccounts()
+    {
+        return $this->hasMany(GamblingDepositAccount::class);
     }
 }

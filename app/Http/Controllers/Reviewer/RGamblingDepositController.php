@@ -23,9 +23,8 @@ class RGamblingDepositController extends Controller
     {
         $perPage = $request->get('per_page', 10);
         $search = $request->get('search', '');
-        $status = $request->get('status', 'all');
 
-        $query = GamblingDeposit::with(['channel.customer', 'creator']);
+        $query = GamblingDeposit::with(['channel.customer', 'creator', 'gamblingDepositAccounts']);
 
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -42,13 +41,41 @@ class RGamblingDepositController extends Controller
             });
         }
 
-        if ($status !== 'all') {
-            $query->where('report_status', $status);
-        }
+        $paginated = $query->orderBy('created_at', 'desc')->paginate($perPage);
 
-        $data = $query->orderBy('created_at', 'desc')->paginate($perPage);
+        $data = $paginated->getCollection()->transform(function ($item) {
+            $accountChannel = $item->gamblingDepositAccounts->first();
+            $channelName = $accountChannel ? $accountChannel->channel_name : null;
 
-        return response()->json($data);
+            return [
+                'id' => $item->id,
+                'website_name' => $item->website_name,
+                'website_url' => $item->website_url,
+                'channel' => [
+                    'channel_type' => $item->channel ? $item->channel->channel_type : $accountChannel->channel_type,
+                    'customer' => [
+                        'full_name' => $item->channel?->customer?->full_name,
+                    ],
+                ],
+                'account_name' => $item->account_name,
+                'account_number' => $item->account_number,
+                'creator' => [
+                    'username' => $item->creator?->username,
+                ],
+                'created_at' => $item->created_at,
+                'updated_at' => $item->updated_at,
+                'report_status' => $item->report_status,
+                'is_non_member' => $item->is_non_member,
+                'channel_name' => $channelName,
+            ];
+        });
+
+        return response()->json([
+            'data' => $data,
+            'current_page' => $paginated->currentPage(),
+            'last_page' => $paginated->lastPage(),
+            'total' => $paginated->total(),
+        ]);
     }
 
 

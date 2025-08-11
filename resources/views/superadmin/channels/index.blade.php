@@ -1,5 +1,11 @@
 @extends('template.app')
 
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('template/assets/vendor/libs/select2/select2.css') }}" />
+    <link rel="stylesheet" href="{{ asset('template/assets/vendor/libs/tagify/tagify.css') }}" />
+    <link rel="stylesheet" href="{{ asset('template/assets/vendor/libs/bootstrap-select/bootstrap-select.css') }}" />
+    <link rel="stylesheet" href="{{ asset('template/assets/vendor/libs/typeahead-js/typeahead.css') }}" />
+@endpush
 @section('content')
     <div class="card">
         <div class="card-header border-bottom">
@@ -107,7 +113,7 @@
 
                 <div class="mb-6" id="add-bank-select-wrapper" style="display: none;">
                     <label for="add-bank-select">Bank</label>
-                    <select id="add-bank-select" name="bank_code" class="form-control">
+                    <select id="add-bank-select" name="bank_code" class="select2 form-select">
                         <option value="">Pilih Bank</option>
                         @foreach ($banks as $bank)
                             <option value="{{ $bank->id }}">{{ $bank->name }}</option>
@@ -165,7 +171,7 @@
 
                 <div class="mb-6" id="edit-bank-select-wrapper" style="display: none;">
                     <label for="edit-bank-select">Bank</label>
-                    <select id="edit-bank-select" name="bank_code" class="form-control">
+                    <select id="edit-bank-select" name="bank_code" class="form-select select2">
                         <option value="">Pilih Bank</option>
                         @foreach ($banks as $bank)
                             <option value="{{ $bank->id }}">{{ $bank->name }}</option>
@@ -192,6 +198,29 @@
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="{{ asset('template/assets/vendor/libs/select2/select2.js') }}"></script>
+    <script src="{{ asset('template/assets/vendor/libs/tagify/tagify.js') }}"></script>
+    <script src="{{ asset('template/assets/vendor/libs/bootstrap-select/bootstrap-select.js') }}"></script>
+    <script src="{{ asset('template/assets/vendor/libs/typeahead-js/typeahead.js') }}"></script>
+    <script src="{{ asset('template/assets/vendor/libs/bloodhound/bloodhound.js') }}"></script>
+
+    <script>
+        'use strict';
+
+        $(function() {
+            const select2 = $('.select2');
+
+            if (select2.length) {
+                select2.each(function() {
+                    var $this = $(this);
+                    $this.wrap('<div class="position-relative"></div>').select2({
+                        placeholder: 'Select value',
+                        dropdownParent: $this.parent()
+                    });
+                });
+            }
+        });
+    </script>
     <script>
         axios.defaults.headers.common['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]').getAttribute(
             'content');
@@ -272,7 +301,9 @@
                                 <div class="channel-card d-flex align-items-center justify-content-between mb-2 p-2 border rounded-2 shadow-sm">
                                     <div>
                                         <span class="badge bg-primary me-2">${channel.channel_code || '-'}</span>
+                                       ${channel.channel_type === 'virtual_account' ? `<span class="channel-name">${channel.channel_name}</span>` : ''}
                                         <span class="text-capitalize text-secondary">${formatChannelType(channel.channel_type)}</span>
+
                                     </div>
                                     <div class="btn-group btn-group-sm">
                                         <button class="btn btn-outline-warning btn-edit" data-id="${channel.id}" data-customer="${customer.id}" title="Edit Channel">

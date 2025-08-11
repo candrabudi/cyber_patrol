@@ -28,7 +28,7 @@ return new class extends Migration
                 ->onDelete('set null');
 
             // Payment Account Information
-            $table->foreignId('channel_id')->constrained('channels')->onDelete('cascade');
+            $table->foreignId('channel_id')->nullable()->constrained('channels')->onDelete('cascade');
             $table->string('account_number');
             $table->string('account_name');
 

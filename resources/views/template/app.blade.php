@@ -45,6 +45,7 @@
             z-index: 9999999 !important;
         }
     </style>
+    @stack('styles')
 </head>
 
 <body>

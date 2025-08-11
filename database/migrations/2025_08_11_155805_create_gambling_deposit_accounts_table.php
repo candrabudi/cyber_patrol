@@ -22,8 +22,8 @@ return new class extends Migration
             $table->string('account_name')->nullable();
             $table->string('account_number')->nullable();
             $table->string('channel_name')->nullable();
-            $table->string('channel_code')->nullable()->unique();
-            $table->enum('channel_type', ['bank', 'ewallet', 'qris', 'virtual_account', 'pulsa']);
+            $table->string('channel_code')->nullable();
+            $table->enum('channel_type', ['transfer', 'ewallet', 'qris', 'virtual_account', 'pulsa']);
 
             // Flagging non-member
             $table->boolean('is_non_member')->default(false);

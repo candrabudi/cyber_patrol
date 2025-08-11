@@ -22,7 +22,7 @@ return new class extends Migration
 
             $table->string('channel_name')->nullable();
             $table->string('channel_code')->nullable()->unique();
-            $table->enum('channel_type', ['bank', 'ewallet', 'qris', 'virtual_account', 'pulsa']);
+            $table->enum('channel_type', ['transfer', 'ewallet', 'qris', 'virtual_account', 'pulsa']);
 
             $table->timestamps();
         });

@@ -3,10 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Bank;
 use App\Models\Channel;
 use App\Models\ErrorLog;
 use App\Models\GamblingDeposit;
+use App\Models\GamblingDepositAccount;
 use App\Models\GamblingDepositAttachment;
+use App\Models\Nns;
+use App\Models\Provider;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -63,8 +67,9 @@ class AGamblingDepositController extends Controller
 
     public function create()
     {
-        $channels = Channel::all();
-        return view('admin.gambling_deposits.create', compact('channels'));
+        $banks = Bank::all();
+        $providers = Provider::all();
+        return view('admin.gambling_deposits.create', compact('banks', 'providers'));
     }
 
     public function store(Request $request)
@@ -74,11 +79,10 @@ class AGamblingDepositController extends Controller
                 'website_name' => 'required|string|max:255',
                 'website_url' => 'required|url',
                 'channel_type' => 'required|in:transfer,ewallet,qris,virtual_account,pulsa',
-                'channel_id' => 'nullable|exists:channels,id',
                 'account_name' => 'nullable|string|max:255',
                 'account_number' => 'nullable|string|max:50',
                 'website_proofs' => 'required|file|mimes:jpeg,jpg,png,pdf',
-                'account_proofs' => 'required|file|mimes:jpeg,jpg,png,pdf',
+                'account_proofs' => 'nullable|file|mimes:jpeg,jpg,png,pdf',
                 'qris_proofs' => 'nullable|file|mimes:jpeg,jpg,png,pdf',
             ], [
                 'website_name.required' => 'Nama website harus diisi.',
@@ -89,7 +93,7 @@ class AGamblingDepositController extends Controller
                 'channel_id.exists' => 'Channel tidak ditemukan.',
                 'website_proofs.required' => 'Bukti website harus diunggah.',
                 'website_proofs.mimes' => 'Format bukti website harus berupa jpeg, jpg, png, atau pdf.',
-                'account_proofs.required' => 'Bukti akun harus diunggah.',
+                // 'account_proofs.required' => 'Bukti akun harus diunggah.',
                 'account_proofs.mimes' => 'Format bukti akun harus berupa jpeg, jpg, png, atau pdf.',
                 'qris_proofs.mimes' => 'Format bukti QRIS harus berupa jpeg, jpg, png, atau pdf.',
             ]);
@@ -97,60 +101,216 @@ class AGamblingDepositController extends Controller
             $deposit = new GamblingDeposit();
             $deposit->website_name = $validated['website_name'];
             $deposit->website_url = $validated['website_url'];
-            $deposit->is_confirmed_gambling = false;
-            $deposit->is_accessible = false;
+            $deposit->is_confirmed_gambling = 0;
+            $deposit->is_accessible = 0;
 
-            if ($validated['channel_type'] === 'qris') {
-                if ($request->hasFile('qris_proofs')) {
-                    $proofFile = $request->file('qris_proofs');
-                    $qrReader = new QrReader($proofFile->getRealPath());
-                    $qrText = $qrReader->text();
+            $gamblingDepositAccount = new GamblingDepositAccount();
 
-                    if ($qrText && str_starts_with($qrText, '000201')) {
-                        $parsedQR = $this->parseEMV($qrText);
+            switch ($validated['channel_type']) {
+                case 'qris':
+                    $accountNumber = '';
+                    $accountName = '';
+                    $gatewayDomain = null;
 
-                        $accountName = $parsedQR['59'] ?? '';
-                        $merchantData = $parsedQR['26'] ?? [];
-                        $accountNumber = '';
-                        if (is_array($merchantData)) {
-                            $accountNumber = $merchantData['01'] ?? '';
-                            $nssn = $accountNumber ? substr($accountNumber, 0, 8) : null;
-                            $providerCode = $merchantData['00'] ?? null;
-                            if ($providerCode && $nssn) {
-                                $foundChannel = Channel::where('channel_type', 'qris')
-                                    ->where('channel_code', $nssn)
-                                    ->first();
-                                $deposit->channel_id = $foundChannel->id ?? null;
+                    if ($request->hasFile('qris_proofs')) {
+                        $proofFile = $request->file('qris_proofs');
+                        $qrReader = new QrReader($proofFile->getRealPath());
+                        $qrText = $qrReader->text();
+
+                        if ($qrText && str_starts_with($qrText, '000201')) {
+                            $parsedQR = $this->parseEMV($qrText);
+
+                            $accountName = $parsedQR['59'] ?? '';
+
+                            $merchantData = $parsedQR['26'] ?? [];
+
+                            if (is_array($merchantData)) {
+                                $accountNumber = $merchantData['01'] ?? '';
                             } else {
-                                $deposit->channel_id = null;
+                                $accountNumber = $merchantData;
                             }
+
+                            $gatewayDomain = null;
+
+                            $patterns = [
+                                '/ID\.[A-Z]{2}\.([A-Z0-9\-]+)\.WWW/i',
+                                '/ID\.[A-Z]{2}\.([A-Z0-9\-]+)\.(com|id|co\.id|net|org|biz)/i',
+                                '/www\.([a-z0-9\-]+)\.(com|id|co\.id|net|org|biz)/i',
+                                '/www\.([a-z0-9\-]+)/i',
+                            ];
+
+                            foreach ($patterns as $pattern) {
+                                if (preg_match($pattern, strtolower($qrText), $matches)) {
+                                    $gatewayDomain = strtoupper($matches[1]);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    $prefix8 = substr($accountNumber, 0, 8);
+                    // return $prefix8;
+                    $foundChannel = Channel::where('channel_type', 'qris')
+                        ->where('channel_code', $prefix8)
+                        ->first();
+
+                    if ($foundChannel) {
+                        $deposit->channel_id = $foundChannel->id;
+                        $deposit->is_non_member = 0;
+                    } else {
+                        $foundNns = Nns::where('code', $accountNumber)->first();
+
+                        if ($foundNns) {
+                            $deposit->channel_id = null;
+                            $deposit->is_non_member = 1;
+
+                            $gamblingDepositAccount->account_name = $accountName;
+                            $gamblingDepositAccount->account_number = $accountNumber;
+                            $gamblingDepositAccount->channel_name = $foundNns->name;
+                            $gamblingDepositAccount->channel_code = $foundNns->code;
+                            $gamblingDepositAccount->channel_type = 'qris';
+                            $gamblingDepositAccount->is_non_member = 1;
+                        } else {
+                            if (!$gatewayDomain) {
+                                return response()->json([
+                                    'success' => 0,
+                                    'message' => 'Maaf, Qris gateway tidak di temukan.'
+                                ], 500);
+                            }
+                            $deposit->channel_id = null;
+                            $deposit->is_non_member = 1;
+
+                            $gamblingDepositAccount->account_name = $accountName;
+                            $gamblingDepositAccount->account_number = $accountNumber;
+                            $gamblingDepositAccount->channel_name = $gatewayDomain;
+                            $gamblingDepositAccount->channel_code = $prefix8;
+                            $gamblingDepositAccount->channel_type = 'qris';
+                            $gamblingDepositAccount->is_non_member = 1;
+                        }
+                    }
+
+                    $deposit->account_name = $accountName;
+                    $deposit->account_number = $accountNumber;
+                    break;
+
+                case 'virtual_account':
+                    $accountNumber = $validated['account_number'] ?? '';
+                    $prefix4 = substr($accountNumber, 0, 4);
+                    $prefix5 = substr($accountNumber, 0, 5);
+
+                    $foundChannel = Channel::where('channel_type', 'virtual_account')
+                        ->where(function ($q) use ($prefix4, $prefix5) {
+                            $q->where('channel_code', $prefix4)
+                                ->orWhere('channel_code', $prefix5);
+                        })->first();
+
+                    $bank = Bank::where('id', $request->channel_id)
+                        ->first();
+
+                    if ($foundChannel) {
+                        $deposit->customer_id = $foundChannel->customer_id;
+                        $deposit->channel_id = $foundChannel->id;
+                        $deposit->is_non_member = 0;
+                    } else {
+                        $deposit->channel_id = null;
+                        $deposit->is_non_member = 1;
+
+                        $gamblingDepositAccount->account_name = $validated['account_name'] ?? '';
+                        $gamblingDepositAccount->account_number = $accountNumber;
+                        $gamblingDepositAccount->channel_name = $bank->name;
+                        $gamblingDepositAccount->channel_code = $prefix4 ?: $prefix5;
+                        $gamblingDepositAccount->channel_type = 'virtual_account';
+                        $gamblingDepositAccount->is_non_member = 1;
+                    }
+
+                    $deposit->account_name = $validated['account_name'] ?? '';
+                    $deposit->account_number = $accountNumber;
+                    break;
+
+                case 'pulsa':
+                    $accountNumber = $validated['account_number'] ?? '';
+
+                    $prefix4 = substr($accountNumber, 0, 4);
+
+                    $provider = Provider::whereJsonContains('prefixes', $prefix4)->first();
+
+                    if ($provider) {
+                        $foundChannel = Channel::where('channel_name', $provider->name)
+                            ->where('channel_code', 'like', $accountNumber . '%')
+                            ->first();
+
+                        if ($foundChannel) {
+                            $deposit->channel_id = $foundChannel->id;
+                            $deposit->is_non_member = 0;
                         } else {
                             $deposit->channel_id = null;
-                        }
+                            $deposit->is_non_member = 1;
 
-                        $deposit->account_name = $accountName;
-                        $deposit->account_number = $accountNumber;
+                            $gamblingDepositAccount->account_name = $validated['account_name'] ?? '';
+                            $gamblingDepositAccount->account_number = $accountNumber;
+                            $gamblingDepositAccount->channel_name = $provider->name;
+                            $gamblingDepositAccount->channel_code = $prefix4;
+                            $gamblingDepositAccount->channel_type = 'pulsa';
+                            $gamblingDepositAccount->is_non_member = 1;
+                        }
                     } else {
-                        $deposit->account_name = '';
-                        $deposit->account_number = '';
-                        $deposit->channel_id = null;
+                        return response()->json([
+                            'success' => 0,
+                            'message' => 'Maaf, kode nomor handphone tidak terdaftar.'
+                        ], 500);
                     }
-                } else {
-                    $deposit->account_name = '';
-                    $deposit->account_number = '';
-                    $deposit->channel_id = null;
-                }
-            } else {
-                $deposit->channel_id = $validated['channel_id'];
-                $deposit->account_name = $validated['account_name'] ?? '';
-                $deposit->account_number = $validated['account_number'] ?? '';
+
+                    $deposit->account_name = $validated['account_name'] ?? '';
+                    $deposit->account_number = $accountNumber;
+
+                    break;
+
+                case 'transfer':
+                    $accountNumber = $validated['account_number'] ?? '';
+                    $bank = Bank::where('id', $request->channel_id)
+                        ->first();
+
+                    $foundChannel = Channel::where('channel_name', $bank->name)
+                        ->first();
+
+                    if ($foundChannel) {
+                        $deposit->customer_id = $foundChannel->customer_id;
+                        $deposit->channel_id = $foundChannel->id;
+                        $deposit->channel_id = $foundChannel->id;
+                        $deposit->is_non_member = 0;
+                    } else {
+                        $deposit->channel_id = null;
+                        $deposit->is_non_member = 1;
+
+                        $gamblingDepositAccount->account_name = $validated['account_name'] ?? '';
+                        $gamblingDepositAccount->account_number = $accountNumber;
+                        $gamblingDepositAccount->channel_name = $bank->name;
+                        $gamblingDepositAccount->channel_code = $bank->code;
+                        $gamblingDepositAccount->channel_type = 'transfer';
+                        $gamblingDepositAccount->is_non_member = 1;
+                    }
+
+                    $deposit->account_name = $validated['account_name'] ?? '';
+                    $deposit->account_number = $accountNumber;
+                    break;
+                default:
+                    $deposit->channel_id = $validated['channel_id'] ?? null;
+                    $deposit->account_name = $validated['account_name'] ?? '';
+                    $deposit->account_number = $validated['account_number'] ?? '';
+                    $deposit->is_non_member = 1;
+                    break;
             }
 
             $deposit->created_by = Auth::id();
             $deposit->save();
 
+            if ($deposit->is_non_member) {
+                $gamblingDepositAccount->gambling_deposit_id = $deposit->id;
+                $gamblingDepositAccount->save();
+            }
+
             if ($request->hasFile('website_proofs')) {
-                $path = $request->file('website_proofs')->store('attachments/website_proof', 'public');
+                $path = $request->file('website_proofs')->store('attachments/website_proof');
                 GamblingDepositAttachment::create([
                     'gambling_deposit_id' => $deposit->id,
                     'attachment_type' => 'website_proof',
@@ -159,7 +319,7 @@ class AGamblingDepositController extends Controller
             }
 
             if ($request->hasFile('account_proofs')) {
-                $path = $request->file('account_proofs')->store('attachments/account_proof', 'public');
+                $path = $request->file('account_proofs')->store('attachments/account_proof');
                 GamblingDepositAttachment::create([
                     'gambling_deposit_id' => $deposit->id,
                     'attachment_type' => 'account_proof',
@@ -168,7 +328,7 @@ class AGamblingDepositController extends Controller
             }
 
             if ($request->hasFile('qris_proofs') && $validated['channel_type'] === 'qris') {
-                $path = $request->file('qris_proofs')->store('attachments/qris_proof', 'public');
+                $path = $request->file('qris_proofs')->store('attachments/qris_proof');
                 GamblingDepositAttachment::create([
                     'gambling_deposit_id' => $deposit->id,
                     'attachment_type' => 'qris_proof',
@@ -179,7 +339,7 @@ class AGamblingDepositController extends Controller
             Log::info('Gambling deposit created', ['id' => $deposit->id, 'user_id' => Auth::id()]);
 
             return response()->json([
-                'success' => true,
+                'success' => 1,
                 'message' => 'Data berhasil disimpan.',
                 'data' => $deposit->load('attachments', 'channel', 'creator')
             ], 201);
@@ -190,7 +350,7 @@ class AGamblingDepositController extends Controller
             }
 
             return response()->json([
-                'success' => false,
+                'success' => 0,
                 'message' => 'Validasi gagal, periksa input Anda.',
                 'errors' => $errors
             ], 422);
@@ -215,9 +375,8 @@ class AGamblingDepositController extends Controller
             ]);
 
             return response()->json([
-                'success' => false,
-                'message' => 'Terjadi kesalahan saat menyimpan data. Silakan coba lagi.' . $e->getMessage(),
-                'error_detail' => $e->getMessage()
+                'success' => 0,
+                'message' => 'Terjadi kesalahan pada server. Silakan coba lagi nanti.'
             ], 500);
         }
     }

@@ -7,6 +7,7 @@ use App\Models\Bank;
 use App\Models\Channel;
 use App\Models\Customer;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class SChannelController extends Controller
 {
@@ -30,38 +31,63 @@ class SChannelController extends Controller
         return response()->json($customers);
     }
 
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'customer_id' => 'required|exists:customers,id',
-            'channel_code' => 'nullable|unique:channels,channel_code',
-            'channel_type' => 'required|in:transfer,ewallet,qris,virtual_account,pulsa',
-        ]);
-
-        $channel = Channel::create($validated);
-
-        return response()->json($channel, 201);
-    }
-
     public function show($id)
     {
         $channel = Channel::with('customer')->findOrFail($id);
         return response()->json($channel);
     }
 
+    public function store(Request $request)
+    {
+        $validated = $this->validateChannel($request);
+
+        $bank = Bank::where('id', $request->bank_code)
+            ->first();
+        $customer = Customer::where('id', $request->customer_id)
+            ->first();
+        $bank = Bank::where('id', $request->bank_code)
+            ->orWhere('name', $customer->full_name)
+            ->first();
+        $channel = new Channel();
+        $channel->customer_id = $validated['customer_id'];
+        $channel->channel_name = $bank ? $bank->name : $customer->full_name;
+        $channel->channel_code = $validated['channel_code'] ?? $bank->code;
+        $channel->channel_type = $validated['channel_type'];
+        $channel->save();
+
+        return response()->json($channel, 201);
+    }
+
     public function update(Request $request, $id)
     {
         $channel = Channel::findOrFail($id);
 
-        $validated = $request->validate([
-            'customer_id' => 'required|exists:customers,id',
-            'channel_code' => 'nullable|unique:channels,channel_code,' . $channel->id,
-            'channel_type' => 'required|in:transfer,ewallet,qris,virtual_account,pulsa',
-        ]);
+        $validated = $this->validateChannel($request, $channel->id);
 
-        $channel->update($validated);
+        $customer = Customer::where('id', $request->customer_id)
+            ->first();
+        $bank = Bank::where('id', $request->bank_code)
+            ->orWhere('name', $customer->full_name)
+            ->first();
+        $channel->customer_id = $validated['customer_id'];
+        $channel->channel_name = $bank ? $bank->name : $customer->full_name;
+        $channel->channel_code = $validated['channel_code'] ?? $bank->code;
+        $channel->channel_type = $validated['channel_type'];
+        $channel->save();
 
         return response()->json($channel);
+    }
+
+    private function validateChannel(Request $request, $ignoreId = null)
+    {
+        return $request->validate([
+            'customer_id' => 'required|exists:customers,id',
+            'channel_code' => [
+                'nullable',
+                Rule::unique('channels', 'channel_code')->ignore($ignoreId),
+            ],
+            'channel_type' => 'required|in:transfer,ewallet,qris,virtual_account,pulsa',
+        ]);
     }
 
     public function destroy($id)

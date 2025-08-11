@@ -14,11 +14,11 @@ return new class extends Migration
         Schema::create('error_logs', function (Blueprint $table) {
             $table->id();
 
-            $table->string('error_message');
+            $table->text('error_message');
 
             $table->text('stack_trace')->nullable();
 
-            $table->string('file')->nullable();
+            $table->text('file')->nullable();
 
             $table->integer('line')->nullable();
 
