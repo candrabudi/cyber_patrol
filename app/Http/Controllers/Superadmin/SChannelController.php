@@ -165,6 +165,18 @@ class SChannelController extends Controller
         }
     }
 
+    private function validateChannel(Request $request, $ignoreId = null)
+    {
+        return $request->validate([
+            'customer_id' => 'required|exists:customers,id',
+            'channel_code' => [
+                'nullable',
+                Rule::unique('channels', 'channel_code')->ignore($ignoreId),
+            ],
+            'channel_type' => 'required|in:transfer,ewallet,qris,virtual_account,pulsa',
+        ]);
+    }
+
     public function destroy($id)
     {
         $channel = Channel::findOrFail($id);
