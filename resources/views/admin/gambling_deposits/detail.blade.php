@@ -1,5 +1,5 @@
 @extends('template.app')
-
+@section('title', 'Detail Rekening Penampung')
 @section('content')
     <div class="row gap-y-64">
         <div class="d-flex justify-content-between align-items-center mb-3">

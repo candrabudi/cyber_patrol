@@ -1,5 +1,5 @@
 @extends('template.app')
-
+@section('title', 'Data Akun Penampung')
 @section('content')
     <div class="card">
         <div class="card-header border-bottom">

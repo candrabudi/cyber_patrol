@@ -1,6 +1,6 @@
 @extends('template.app')
 
-@section('title', 'Dashboard Customer')
+@section('title', 'Dashboard Reviewer')
 
 @section('content')
 <div class="row g-6">

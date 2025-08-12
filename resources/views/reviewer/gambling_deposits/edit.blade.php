@@ -1,5 +1,5 @@
 @extends('template.app')
-
+@section('title', 'Edit Rekening Penampung')
 @section('content')
     @php
         $isFinal = in_array($gamblingDeposit->report_status, ['approved', 'rejected']);
