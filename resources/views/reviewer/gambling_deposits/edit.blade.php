@@ -81,7 +81,7 @@
                                     Rekening Pembayaran</h5>
                                 <dl class="row mb-0">
                                     <dt class="col-5">Tipe Channel</dt>
-                                    <dd class="col-7">{{ ucfirst($gamblingDeposit->channel->channel_type) }}</dd>
+                                     <dd class="col-7">{{ $gamblingDeposit->channel ? ucfirst($gamblingDeposit->channel->channel_type) : ucfirst($gamblingDeposit->gamblingDepositAccount->channel_type) }}</dd>
                                     <dt class="col-5">Nama Rekening</dt>
                                     <dd class="col-7">{{ $gamblingDeposit->account_name }}</dd>
                                     <dt class="col-5">Nomor Rekening</dt>
