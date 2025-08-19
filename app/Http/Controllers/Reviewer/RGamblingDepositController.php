@@ -10,6 +10,7 @@ use App\Models\GamblingDepositAttachment;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Zxing\QrReader;
 
@@ -49,8 +50,9 @@ class RGamblingDepositController extends Controller
 
             return [
                 'id' => $item->id,
-                'website_name' => $item->website_name,
-                'website_url' => $item->website_url,
+                'website_name' => $item->website->website_name,
+                'website_url' => $item->website->website_url,
+                'website_attachment' => asset('storage/' . $item->website->website_proofs),
                 'channel' => [
                     'channel_type' => $item->channel ? $item->channel->channel_type : $accountChannel->channel_type,
                     'customer' => [
@@ -67,6 +69,7 @@ class RGamblingDepositController extends Controller
                 'report_status' => $item->report_status,
                 'is_non_member' => $item->is_non_member,
                 'channel_name' => $channelName,
+                'account_proof' => asset('storage/' . $item->attachmentAccount->file_path)
             ];
         });
 
@@ -143,5 +146,40 @@ class RGamblingDepositController extends Controller
         return redirect()
             ->route('reviewer.gambling_deposits.edit', $gamblingDeposit->id)
             ->with('success', 'Data berhasil diperbarui.');
+    }
+
+    public function changeStatus($id, $status)
+    {
+        DB::beginTransaction();
+        try {
+            $find = GamblingDeposit::where('id', $id)
+                ->where('report_status', 'pending')
+                ->first();
+            if (!$find) {
+                return response()
+                    ->json([
+                        'success' => 0,
+                        'message' => 'Data not found.'
+                    ], 404);
+            }
+
+            $find->report_status = $status;
+            $find->save();
+
+            DB::commit();
+            return response()
+                ->json([
+                    'success' => 1,
+                    'message' => 'Success update report status'
+                ], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()
+                ->json([
+                    'success' => 0,
+                    'message' => 'Internal server error',
+                    'message_error' => $e->getMessage()
+                ], 500);
+        }
     }
 }

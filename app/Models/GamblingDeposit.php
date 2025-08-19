@@ -37,6 +37,12 @@ class GamblingDeposit extends Model
         return $this->hasMany(GamblingDepositAttachment::class);
     }
 
+    public function attachmentAccount()
+    {
+        return $this->hasOne(GamblingDepositAttachment::class)
+            ->where('attachment_type', 'account_proof');
+    }
+
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
@@ -59,5 +65,10 @@ class GamblingDeposit extends Model
     public function gamblingDepositAccount()
     {
         return $this->hasOne(GamblingDepositAccount::class);
+    }
+
+    public function website()
+    {
+        return $this->hasOne(Website::class, 'id', 'website_id');
     }
 }

@@ -2,318 +2,375 @@
 @section('title', 'Tambah Data Rekening Penampung')
 @push('styles')
     <link rel="stylesheet" href="{{ asset('template/assets/vendor/libs/select2/select2.css') }}" />
-    <link rel="stylesheet" href="{{ asset('template/assets/vendor/libs/tagify/tagify.css') }}" />
     <link rel="stylesheet" href="{{ asset('template/assets/vendor/libs/bootstrap-select/bootstrap-select.css') }}" />
-    <link rel="stylesheet" href="{{ asset('template/assets/vendor/libs/typeahead-js/typeahead.css') }}" />
 @endpush
+
 @section('content')
     <div class="card mb-6">
         <div class="card-header border-bottom">
             <h5 class="card-title mb-0">Tambah Data Rekening Penampung</h5>
-            <div class="d-flex justify-content-between align-items-center row pt-4 gap-4 gap-md-0">
-                <div class="col-md-4 user_role"></div>
-                <div class="col-md-4 user_plan"></div>
-                <div class="col-md-4 user_status"></div>
-            </div>
         </div>
         <div class="card-body mt-6">
             <form action="{{ route('admin.gambling_deposits.store') }}" method="POST" enctype="multipart/form-data"
-                id="gamblingDepositForm">
+                id="gamblingDepositForm" novalidate>
                 @csrf
 
                 <div id="alertContainer"></div>
 
-                <div class="row">
+                <h6>Data Website</h6>
+                <div class="row mb-4">
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label for="website_name" class="form-label">Nama Website</label>
                             <input type="text" class="form-control" id="website_name" name="website_name" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="channel_type" class="form-label">Pilih Tipe Channel</label>
-                            <select id="channel_type" name="channel_type" class="form-select" required>
-                                <option value="">-- Pilih Tipe Channel --</option>
-                                <option value="transfer">Bank</option>
-                                <option value="qris">QRIS</option>
-                                <option value="virtual_account">Virtual Account</option>
-                                <option value="pulsa">Pulsa</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-3" id="account_name_div" style="display:none;">
-                            <label for="account_name" class="form-label">Nama Rekening</label>
-                            <input type="text" class="form-control" id="account_name" name="account_name">
-                        </div>
-
-                        <div class="mb-3" id="account_number_div" style="display:none;">
-                            <label for="account_number" class="form-label" id="account_number_label">Nomor Rekening / Nomor
-                                Handphone</label>
-                            <input type="text" class="form-control" id="account_number" name="account_number">
+                            <div class="invalid-feedback">Nama website wajib diisi.</div>
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">Bukti Website</label>
                             <input type="file" class="form-control" name="website_proofs"
                                 accept="image/*,application/pdf" required>
+                            <div class="invalid-feedback">Bukti website wajib diupload (jpg/png/pdf, max 2MB).</div>
                         </div>
                     </div>
-
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label for="website_url" class="form-label">URL Website</label>
-                            <input type="url" class="form-control" id="website_url" name="website_url" required>
-                        </div>
-
-                        <div class="mb-3" id="channel_select_div" style="display:none;">
-                            <label for="channel_id" class="form-label" id="channel_label">Pilih Channel</label>
-                            <select name="channel_id" id="channel_id" class="form-select select2">
-                                <option value="">-- Pilih Channel --</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-3" id="account_proofs_div">
-                            <label class="form-label">Bukti Rekening</label>
-                            <input type="file" class="form-control" name="account_proofs"
-                                accept="image/*,application/pdf" required>
-                        </div>
-
-                        <div class="mb-3" id="qris_proof_div" style="display:none;">
-                            <label class="form-label">Bukti QRIS</label>
-                            <input type="file" class="form-control" name="qris_proofs" accept="image/*,application/pdf">
+                            <input type="url" class="form-control" id="website_url" name="website_url"
+                                placeholder="https://contoh.com" required>
+                            <div class="invalid-feedback">URL tidak valid, gunakan format https://...</div>
                         </div>
                     </div>
                 </div>
 
-                <div class="mt-3">
+                <hr>
+                <h6>Data Rekening</h6>
+                <div id="rekeningWrapper">
+                    <div class="rekening-item border rounded p-3 mb-3">
+                        <button type="button" class="btn-close float-end removeRekeningBtn" aria-label="Close"></button>
+
+                        <div class="mb-3">
+                            <label class="form-label">Pilih Tipe Channel</label>
+                            <select name="channel_type[]" class="form-select channel_type" required>
+                                <option value="">-- Pilih Tipe Channel --</option>
+                                <option value="transfer">Bank</option>
+                                <option value="qris">QRIS</option>
+                                <option value="virtual_account">Virtual Account</option>
+                                <option value="pulsa">Pulsa</option>
+                            </select>
+                            <div class="invalid-feedback">Tipe channel wajib dipilih.</div>
+                        </div>
+
+                        <div class="mb-3 account_name_div" style="display:none;">
+                            <label class="form-label">Nama Rekening</label>
+                            <input type="text" class="form-control account_name" name="account_name[]">
+                            <div class="invalid-feedback">Nama rekening wajib diisi.</div>
+                        </div>
+
+                        <div class="mb-3 account_number_div" style="display:none;">
+                            <label class="form-label account_number_label">Nomor Rekening / Nomor Handphone</label>
+                            <input type="text" class="form-control account_number" name="account_number[]">
+                            <div class="invalid-feedback">Nomor rekening / HP tidak valid.</div>
+                        </div>
+
+                        <div class="mb-3 channel_select_div" style="display:none;">
+                            <label class="form-label channel_label">Pilih Channel</label>
+                            <select name="channel_id[]" class="form-select select2 channel_id">
+                                <option value="">-- Pilih Channel --</option>
+                            </select>
+                            <div class="invalid-feedback">Channel wajib dipilih.</div>
+                        </div>
+
+                        <div class="mb-3 account_proofs_div">
+                            <label class="form-label">Bukti Rekening</label>
+                            <input type="file" class="form-control account_proofs" name="account_proofs[]"
+                                accept="image/*,application/pdf" required>
+                            <div class="invalid-feedback">Bukti rekening wajib diupload (jpg/png/pdf, max 2MB).</div>
+                        </div>
+
+                        <div class="mb-3 qris_proof_div" style="display:none;">
+                            <label class="form-label">Bukti QRIS</label>
+                            <input type="file" class="form-control qris_proofs" name="qris_proofs[]"
+                                accept="image/*,application/pdf">
+                            <div class="invalid-feedback">Bukti QRIS wajib diupload (jpg/png/pdf, max 2MB).</div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" class="btn btn-secondary mt-2" id="addRekeningBtn">+ Tambah Rekening</button>
+
+                {{-- ================= SUBMIT ================= --}}
+                <div class="mt-4">
                     <button type="submit" class="btn btn-primary" id="submitBtn">Simpan</button>
                 </div>
             </form>
         </div>
     </div>
 @endsection
-
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="{{ asset('template/assets/vendor/libs/select2/select2.js') }}"></script>
-    <script src="{{ asset('template/assets/vendor/libs/tagify/tagify.js') }}"></script>
-    <script src="{{ asset('template/assets/vendor/libs/bootstrap-select/bootstrap-select.js') }}"></script>
-    <script src="{{ asset('template/assets/vendor/libs/typeahead-js/typeahead.js') }}"></script>
-    <script src="{{ asset('template/assets/vendor/libs/bloodhound/bloodhound.js') }}"></script>
 
     <script>
-        'use strict';
+        document.addEventListener('DOMContentLoaded', function() {
+            const websiteInput = document.getElementById('website_url');
+            const submitBtn = document.getElementById('submitBtn'); // tombol submit utama
+            const rekeningWrapper = document.getElementById('rekeningWrapper');
+            const addRekeningBtn = document.getElementById('addRekeningBtn');
+            const form = document.getElementById('gamblingDepositForm');
+            const alertContainer = document.getElementById('alertContainer');
 
-        $(function() {
-            const select2 = $('.select2');
+            const banks = @json($banks);
+            const providers = @json($providers);
 
-            if (select2.length) {
-                select2.each(function() {
-                    var $this = $(this);
-                    $this.wrap('<div class="position-relative"></div>').select2({
-                        placeholder: 'Select value',
-                        dropdownParent: $this.parent()
-                    });
-                });
-            }
-        });
-    </script>
-    <script>
-        const channelTypeSelect = document.getElementById('channel_type');
-        const channelSelectDiv = document.getElementById('channel_select_div');
-        const channelSelect = document.getElementById('channel_id');
-        const accountNameDiv = document.getElementById('account_name_div');
-        const accountNameInput = document.getElementById('account_name');
-        const accountNumberDiv = document.getElementById('account_number_div');
-        const accountNumberInput = document.getElementById('account_number');
-        const qrisProofDiv = document.getElementById('qris_proof_div');
-        const accountProofsDiv = document.getElementById('account_proofs_div');
-        const accountProofsInput = accountProofsDiv ? accountProofsDiv.querySelector('input') : null;
+            // Regex validation
+            const urlRegex = /^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}(\/.*)?$/i;
+            const hpRegex = /^[0-9]{10,15}$/;
+            const rekeningRegex = /^[0-9]{6,20}$/;
 
-        const channelLabel = document.getElementById('channel_label');
-        const accountNumberLabel = document.getElementById('account_number_label');
+            // ================= Website URL Validation =================
+            websiteInput.addEventListener('blur', () => {
+                const inputUrl = websiteInput.value.trim();
+                if (!inputUrl) return;
 
-        const banks = @json($banks);
-        const providers = @json($providers);
-
-        function resetAccountInputs() {
-            accountNameInput.value = '';
-            accountNumberInput.value = '';
-            accountNameInput.required = false;
-            accountNumberInput.required = false;
-        }
-
-        function generateChannelOptions(type) {
-            channelSelect.innerHTML = '';
-
-            let placeholderText = '-- Pilih Channel --';
-            let items = [];
-
-            if (type === 'bank' || type === 'virtual_account' || type === 'transfer') {
-                placeholderText = '-- Pilih Bank --';
-                items = banks;
-            } else if (type === 'pulsa') {
-                placeholderText = '-- Pilih Provider --';
-                items = providers;
-            }
-
-            channelLabel.textContent = placeholderText.replace('-- Pilih ', 'Pilih ').replace(' --', '');
-
-            const placeholderOption = document.createElement('option');
-            placeholderOption.value = '';
-            placeholderOption.textContent = placeholderText;
-            channelSelect.appendChild(placeholderOption);
-
-            items.forEach(item => {
-                const option = document.createElement('option');
-                option.value = item.id;
-                option.textContent = `${item.name} (${item.code})`;
-                channelSelect.appendChild(option);
+                axios.get('/websites/check-url', {
+                        params: {
+                            url: inputUrl
+                        }
+                    })
+                    .then(res => {
+                        const {
+                            exists,
+                            message
+                        } = res.data;
+                        if (exists) {
+                            websiteInput.classList.add('is-invalid');
+                            websiteInput.nextElementSibling.textContent = message;
+                            submitBtn.disabled = true;
+                        } else {
+                            websiteInput.classList.remove('is-invalid');
+                            submitBtn.disabled = false;
+                        }
+                    })
+                    .catch(err => console.error(err));
             });
 
-            channelSelect.value = '';
-        }
-
-        function updateAccountNumberLabel(type) {
-            if (type === 'virtual_account') {
-                accountNumberLabel.textContent = 'Nomor BIN (notes 4-5 digit depan)';
-            } else if (type === 'pulsa') {
-                accountNumberLabel.textContent = 'Nomor Handphone';
-            } else if (type === 'transfer' || type === 'bank') {
-                accountNumberLabel.textContent = 'Nomor Rekening';
-            } else {
-                accountNumberLabel.textContent = 'Nomor Rekening / Nomor Handphone';
-            }
-        }
-
-        function updateFormFields(type) {
-            resetAccountInputs();
-            updateAccountNumberLabel(type);
-
-            if (type === 'qris') {
-                channelSelectDiv.style.display = 'none';
-                channelSelect.required = false;
-
-                qrisProofDiv.style.display = 'block';
-                qrisProofDiv.querySelector('input').required = true;
+            // ================= Update Form Fields =================
+            function updateFormFields(item, type) {
+                const accountNameDiv = item.querySelector('.account_name_div');
+                const accountNumberDiv = item.querySelector('.account_number_div');
+                const accountNumberLabel = item.querySelector('.account_number_label');
+                const channelSelectDiv = item.querySelector('.channel_select_div');
+                const channelSelect = item.querySelector('.channel_id');
+                const channelLabel = item.querySelector('.channel_label');
+                const qrisProofDiv = item.querySelector('.qris_proof_div');
+                const accountProofsDiv = item.querySelector('.account_proofs_div');
 
                 accountNameDiv.style.display = 'none';
                 accountNumberDiv.style.display = 'none';
-
-                if (accountProofsDiv) {
-                    accountProofsDiv.style.display = 'none';
-                    if (accountProofsInput) {
-                        accountProofsInput.required = false;
-                        accountProofsInput.value = '';
-                    }
-                }
-            } else {
-                channelSelectDiv.style.display = 'block';
-                channelSelect.required = true;
-
-                if (accountProofsDiv) {
-                    accountProofsDiv.style.display = 'block';
-                    if (accountProofsInput) {
-                        accountProofsInput.required = true;
-                    }
-                }
-
-                generateChannelOptions(type);
-
+                channelSelectDiv.style.display = 'none';
                 qrisProofDiv.style.display = 'none';
-                qrisProofDiv.querySelector('input').required = false;
-                qrisProofDiv.querySelector('input').value = '';
+                accountProofsDiv.style.display = 'block';
 
-                if (type === 'bank' || type === 'transfer') {
+                if (type === 'qris') {
+                    qrisProofDiv.style.display = 'block';
+                    accountProofsDiv.style.display = 'none';
+                    return;
+                }
+
+                channelSelectDiv.style.display = 'block';
+                channelSelect.innerHTML = '';
+
+                let placeholder = '-- Pilih Channel --';
+                let items = [];
+                if (['bank', 'transfer', 'virtual_account'].includes(type)) {
+                    placeholder = '-- Pilih Bank --';
+                    items = banks;
+                } else if (type === 'pulsa') {
+                    placeholder = '-- Pilih Provider --';
+                    items = providers;
+                }
+
+                channelLabel.textContent = placeholder.replace('-- ', '').replace(' --', '');
+                const opt = document.createElement('option');
+                opt.value = '';
+                opt.textContent = placeholder;
+                channelSelect.appendChild(opt);
+
+                items.forEach(i => {
+                    const o = document.createElement('option');
+                    o.value = i.id;
+                    o.textContent = `${i.name} (${i.code})`;
+                    channelSelect.appendChild(o);
+                });
+
+                if (['bank', 'transfer'].includes(type)) {
                     accountNameDiv.style.display = 'block';
                     accountNumberDiv.style.display = 'block';
-                    accountNameInput.required = true;
-                    accountNumberInput.required = true;
-                } else if (type === 'virtual_account' || type === 'pulsa') {
-                    accountNameDiv.style.display = 'none';
+                    accountNumberLabel.textContent = 'Nomor Rekening';
+                } else if (type === 'virtual_account') {
                     accountNumberDiv.style.display = 'block';
-                    accountNumberInput.required = true;
-                } else {
-                    accountNameDiv.style.display = 'none';
-                    accountNumberDiv.style.display = 'none';
+                    accountNumberLabel.textContent = 'Nomor BIN (4-5 digit depan)';
+                } else if (type === 'pulsa') {
+                    accountNumberDiv.style.display = 'block';
+                    accountNumberLabel.textContent = 'Nomor Handphone';
                 }
             }
-        }
 
-        channelTypeSelect.addEventListener('change', function() {
-            updateFormFields(this.value);
-        });
+            // ================= Input Validation =================
+            function validateInput(input) {
+                if (input.hasAttribute('required') && !input.value.trim() && input.type !== 'file') {
+                    input.classList.add('is-invalid');
+                    return false;
+                }
 
-        window.addEventListener('DOMContentLoaded', () => {
-            if (channelTypeSelect.value) {
-                updateFormFields(channelTypeSelect.value);
+                if (input.id === 'website_url' && input.value && !urlRegex.test(input.value)) {
+                    input.classList.add('is-invalid');
+                    return false;
+                }
+
+                if (input.classList.contains('account_number') && input.value) {
+                    const parent = input.closest('.rekening-item');
+                    const type = parent.querySelector('.channel_type').value;
+
+                    if (type === 'pulsa' && !hpRegex.test(input.value)) {
+                        input.classList.add('is-invalid');
+                        return false;
+                    }
+                    if (['transfer', 'bank'].includes(type) && !rekeningRegex.test(input.value)) {
+                        input.classList.add('is-invalid');
+                        return false;
+                    }
+                }
+
+                if (input.type === 'file' && input.files.length > 0) {
+                    const file = input.files[0];
+                    const allowed = ['image/jpeg', 'image/png', 'application/pdf'];
+                    if (!allowed.includes(file.type) || file.size > 2 * 1024 * 1024) {
+                        input.classList.add('is-invalid');
+                        return false;
+                    }
+                }
+
+                input.classList.remove('is-invalid');
+                return true;
             }
-        });
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('gamblingDepositForm');
-            const submitBtn = document.getElementById('submitBtn');
-            const alertContainer = document.getElementById('alertContainer');
+            // ================= Re-initialize Reings =================
+            function initRekeningEvents(item) {
+                const typeSelect = item.querySelector('.channel_type');
+                typeSelect.addEventListener('change', () => updateFormFields(item, typeSelect.value));
 
+                const removeBtn = item.querySelector('.removeRekeningBtn');
+                removeBtn.addEventListener('click', () => {
+                    if (document.querySelectorAll('.rekening-item').length > 1) {
+                        item.remove();
+                    } else {
+                        alert('Minimal 1 rekening harus ada.');
+                    }
+                });
+
+                item.querySelectorAll('input, select').forEach(el => {
+                    el.addEventListener('blur', () => validateInput(el));
+                    el.addEventListener('change', () => validateInput(el));
+                });
+            }
+
+            rekeningWrapper.querySelectorAll('.rekening-item').forEach(initRekeningEvents);
+
+            addRekeningBtn.addEventListener('click', () => {
+                const firstItem = rekeningWrapper.querySelector('.rekening-item');
+                const clone = firstItem.cloneNode(true);
+
+                clone.querySelectorAll('input').forEach(i => {
+                    i.value = '';
+                    i.classList.remove('is-invalid');
+                });
+                clone.querySelectorAll('select').forEach(s => {
+                    s.value = '';
+                    s.classList.remove('is-invalid');
+                });
+
+                rekeningWrapper.appendChild(clone);
+                initRekeningEvents(clone);
+            });
+
+            // ================= Show Alert =================
             function showAlert(type, message) {
                 alertContainer.innerHTML = `
             <div class="alert alert-${type} alert-dismissible fade show" role="alert">
                 ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>`;
                 alertContainer.scrollIntoView({
                     behavior: 'smooth'
                 });
             }
 
+            // ================= Submit Form =================
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
 
-                alertContainer.innerHTML = '';
+                let valid = true;
+                form.querySelectorAll('input, select').forEach(el => {
+                    if (!validateInput(el)) valid = false;
+                });
+
+                if (!valid) {
+                    showAlert('danger', 'Periksa kembali input yang belum valid.');
+                    return;
+                }
 
                 submitBtn.disabled = true;
                 const originalText = submitBtn.textContent;
                 submitBtn.textContent = 'Menyimpan...';
 
                 const formData = new FormData(form);
+                const payload = {
+                    _token: formData.get('_token'),
+                    website_name: formData.get('website_name'),
+                    website_url: formData.get('website_url'),
+                    website_proofs: formData.get('website_proofs'),
+                    accounts: []
+                };
 
-                axios.post(form.action, formData, {
-                        headers: {
-                            'Content-Type': 'multipart/form-data'
-                        }
-                    })
-                    .then(response => {
-                        if (response.data.success) {
-                            showAlert('success', response.data.message || 'Data berhasil disimpan.');
+                document.querySelectorAll('.rekening-item').forEach(item => {
+                    payload.accounts.push({
+                        channel_type: item.querySelector('.channel_type')?.value || null,
+                        account_name: item.querySelector('.account_name')?.value || null,
+                        account_number: item.querySelector('.account_number')?.value ||
+                            null,
+                        channel_id: item.querySelector('.channel_id')?.value || null,
+                        account_proofs: item.querySelector('.account_proofs')?.files[0] ||
+                            null,
+                        qris_proofs: item.querySelector('.qris_proofs')?.files[0] || null,
+                    });
+                });
+
+                const finalFormData = new FormData();
+                Object.keys(payload).forEach(key => {
+                    if (key === 'accounts') {
+                        payload.accounts.forEach((acc, i) => {
+                            Object.keys(acc).forEach(k => {
+                                if (acc[k] !== null) finalFormData.append(
+                                    `accounts[${i}][${k}]`, acc[k]);
+                            });
+                        });
+                    } else {
+                        finalFormData.append(key, payload[key]);
+                    }
+                });
+
+                axios.post(form.action, finalFormData)
+                    .then(res => {
+                        if (res.data.success) {
+                            showAlert('success', res.data.message || 'Data berhasil disimpan');
                             form.reset();
-                            channelTypeSelect.dispatchEvent(new Event('change'));
                         } else {
-                            showAlert('warning', response.data.message || 'Terjadi masalah.');
+                            showAlert('warning', res.data.message || 'Terjadi masalah');
                         }
                     })
-                    .catch(error => {
-                        if (error.response) {
-                            if (error.response.status === 422) {
-                                let errors = error.response.data.errors;
-                                let messages = '<ul class="mb-0">';
-                                for (const key in errors) {
-                                    if (errors.hasOwnProperty(key)) {
-                                        errors[key].forEach(msg => {
-                                            messages += `<li>${msg}</li>`;
-                                        });
-                                    }
-                                }
-                                messages += '</ul>';
-                                showAlert('danger', `<strong>Validasi gagal:</strong> ${messages}`);
-                            } else if (error.response.data.message) {
-                                showAlert('danger', error.response.data.message);
-                            } else {
-                                showAlert('danger', 'Terjadi kesalahan server.');
-                            }
-                        } else {
-                            showAlert('danger', 'Gagal menghubungi server.');
-                        }
-                    })
+                    .catch(err => showAlert('danger', 'Gagal menyimpan data.'))
                     .finally(() => {
                         submitBtn.disabled = false;
                         submitBtn.textContent = originalText;

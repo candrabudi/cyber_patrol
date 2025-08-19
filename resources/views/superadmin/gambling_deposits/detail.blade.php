@@ -17,24 +17,24 @@
                         <h5 class="text-primary mb-3">Informasi Website</h5>
                         <dl class="row">
                             <dt class="col-5">Nama Website</dt>
-                            <dd class="col-7">{{ $gamblingDeposit->website_name }}</dd>
+                            <dd class="col-7">{{ $gamblingDeposit->website->website_name }}</dd>
 
                             <dt class="col-5">URL Website</dt>
                             <dd class="col-7">
-                                <a href="{{ $gamblingDeposit->website_url }}"
-                                    target="_blank">{{ $gamblingDeposit->website_url }}</a>
+                                <a href="{{ $gamblingDeposit->website->website_url }}"
+                                    target="_blank">{{ $gamblingDeposit->website->website_url }}</a>
                             </dd>
 
                             <dt class="col-5">Teridentifikasi Judi?</dt>
                             <dd class="col-7">
-                                {!! $gamblingDeposit->is_confirmed_gambling
+                                {!! $gamblingDeposit->website->is_confirmed_gambling
                                     ? '<span class="badge bg-success">Ya</span>'
                                     : '<span class="badge bg-secondary">Tidak</span>' !!}
                             </dd>
 
                             <dt class="col-5">Dapat Diakses?</dt>
                             <dd class="col-7">
-                                {!! $gamblingDeposit->is_accessible
+                                {!! $gamblingDeposit->website->is_accessible
                                     ? '<span class="badge bg-success">Ya</span>'
                                     : '<span class="badge bg-secondary">Tidak</span>' !!}
                             </dd>

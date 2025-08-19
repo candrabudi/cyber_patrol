@@ -14,6 +14,8 @@ use App\Http\Controllers\Superadmin\SDashboardController;
 use App\Http\Controllers\Superadmin\SGamblingDepositController;
 use App\Http\Controllers\Superadmin\SUserController;
 use App\Http\Middleware\RoleMiddleware;
+use App\Models\Website;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 
@@ -81,6 +83,7 @@ Route::middleware(['auth', RoleMiddleware::class . ':reviewer'])->prefix('review
         Route::get('/data', [RGamblingDepositController::class, 'data'])->name('data');
         Route::get('/{id}/edit', [RGamblingDepositController::class, 'edit'])->name('edit');
         Route::put('/{id}/update', [RGamblingDepositController::class, 'update'])->name('update');
+        Route::post('/{id}/{status}', [RGamblingDepositController::class, 'changeStatus'])->name('changeStatus');
     });
 });
 
@@ -97,7 +100,45 @@ Route::middleware(['auth', RoleMiddleware::class . ':customer'])->prefix('custom
         Route::get('/', [CGamblingReportController::class, 'index'])->name('index');
         Route::get('/data', [CGamblingReportController::class, 'data'])->name('data');
 
-        // Tambahkan route export POST untuk export selected/all
         Route::post('/export', [CGamblingReportController::class, 'export'])->name('export');
     });
+});
+
+
+Route::get('/websites/check-url', function (Request $request) {
+    $inputUrl = trim($request->query('url'));
+
+    if (!$inputUrl) {
+        return response()->json(['exists' => true, 'message' => 'URL tidak boleh kosong']);
+    }
+
+    $parsedUrl = parse_url(strtolower($inputUrl));
+    $host = $parsedUrl['host'] ?? '';
+    if (!$host) {
+        return response()->json(['exists' => true, 'message' => 'URL tidak valid']);
+    }
+
+    $host = preg_replace('/^www\./', '', $host);
+
+    $parts = explode('.', $host);
+    $domainParts = array_slice($parts, -2);
+    $inputDomain = implode('.', $domainParts);
+
+    $websites = Website::all();
+
+    foreach ($websites as $site) {
+        $existingHost = parse_url(strtolower($site->website_url), PHP_URL_HOST);
+        $existingHost = preg_replace('/^www\./', '', $existingHost);
+        $existingParts = explode('.', $existingHost);
+        $existingDomain = implode('.', array_slice($existingParts, -2));
+
+        if ($inputDomain === $existingDomain) {
+            return response()->json([
+                'exists' => true,
+                'message' => 'Domain atau subdomain sudah ada di database'
+            ]);
+        }
+    }
+
+    return response()->json(['exists' => false]);
 });

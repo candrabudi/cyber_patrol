@@ -1,6 +1,12 @@
 @extends('template.app')
 @section('title', 'Data Akun Penampung')
 @section('content')
+    <style>
+        .table-responsive table {
+            min-width: 1200px;
+            /* atur sesuai jumlah kolom */
+        }
+    </style>
     <div class="card">
         <div class="card-header border-bottom">
             <h5 class="card-title mb-0">Data Akun Penampung</h5>
@@ -48,28 +54,29 @@
                 </div>
             </div>
 
-            <div class="justify-content-between dt-layout-table">
-                <div class="d-md-flex justify-content-between align-items-center dt-layout-full table-responsive">
-                    <table class="datatables-users table dataTable dtr-column" id="DataTables_Table_0"
-                        aria-describedby="DataTables_Table_0_info">
+            <div class="dt-layout-table w-100">
+                <div class="table-responsive" style="overflow-x:auto;">
+                    <table class="table table-striped table-bordered table-hover" style="min-width:1900px;" id="data">
                         <thead class="border-top">
                             <tr>
                                 <th>#</th>
                                 <th>Website</th>
-                                <th>URL</th>
+                                <th width="120">URL</th>
+                                <th width="140">Bukti Website</th>
                                 <th>Tipe</th>
-                                <th>Customer</th>
-                                <th>Pemilik Akun</th>
-                                <th>Nomor Akun</th>
-                                <th>DiInput</th>
-                                <th>DiUpdate</th>
-                                <th>Status</th>
+                                <th width="200">Customer</th>
+                                <th width="100">Pemilik</th>
+                                <th>REK/NO/VA/MID</th>
+                                <th width="160">Bukti Rekening</th>
+                                <th width="100">DiInput</th>
+                                <th width="80">DiBuat</th>
+                                <th width="60">Status</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td colspan="12" class="dt-empty text-center">Loading...</td>
+                                <td colspan="11" class="text-center">Loading...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -91,7 +98,7 @@
         axios.defaults.headers.common['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]').getAttribute(
             'content');
 
-        const tableBody = document.querySelector('#DataTables_Table_0 tbody');
+        const tableBody = document.querySelector('#data tbody');
         const pagination = document.querySelector('#pagination');
         const infoText = document.getElementById('DataTables_Table_0_info');
         const perPageSelect = document.getElementById('dt-length-0');
@@ -146,7 +153,7 @@
 
                     if (data.length === 0) {
                         tableBody.innerHTML =
-                        '<tr><td colspan="10" class="text-center">Data tidak ditemukan.</td></tr>';
+                            '<tr><td colspan="12" class="text-center">Data tidak ditemukan.</td></tr>';
                         pagination.innerHTML = '';
                         infoText.textContent = `Menampilkan 0 sampai 0 dari 0 data`;
                         return;
@@ -159,24 +166,45 @@
                     tableBody.innerHTML = '';
                     data.forEach((item, index) => {
                         const customerName = item.channel?.customer?.full_name || item.channel_name || '-';
-                        const nonMemberFlag = item.is_non_member ? '<span class="badge bg-warning text-white">Non Member</span>' : '';
+                        const nonMemberFlag = item.is_non_member ?
+                            '<span class="badge bg-warning text-white" style="display: block;">Non Member</span>' : '';
                         const channelType = item.channel?.channel_type || '-';
-
+                        let actionButtons =
+                            `<a class="btn btn-sm btn-warning" href="/reviewer/gambling-deposits/${item.id}/edit">Edit</a>`;
+                        if (item.report_status === 'pending') {
+                            actionButtons += 
+                                `
+                                    <button class="btn btn-sm btn-success" onclick="processDeposit(${item.id}, 'approved')">Approve</button>
+                                    <button class="btn btn-sm btn-danger" onclick="processDeposit(${item.id}, 'rejected')">Reject</button>
+                                `
+                            ;
+                        }
                         tableBody.innerHTML += `
                             <tr>
                                 <td>${(current_page - 1) * perPage + index + 1}</td>
                                 <td>${item.website_name}</td>
                                 <td><a href="${item.website_url}" target="_blank" rel="noopener">${item.website_url}</a></td>
+                                <td>
+                                    <button class="btn btn-sm btn-info" onclick="showModal('Bukti Website', '${item.website_attachment}')">
+                                        Lihat
+                                    </button>
+                                </td>
+
                                 <td>${formatChannelType(channelType)}</td>
                                 <td>${customerName} ${nonMemberFlag}</td>
                                 <td>${item.account_name}</td>
                                 <td>${item.account_number}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-secondary" onclick="showModal('Bukti Akun Penampung', '${item.account_proof}')">
+                                        Lihat
+                                    </button>
+                                </td>
+
                                 <td>${item.creator?.username ?? 'Unknown'}</td>
                                 <td>${new Date(item.created_at).toLocaleDateString('id-ID')}</td>
-                                <td>${new Date(item.updated_at).toLocaleDateString('id-ID')}</td>
                                 <td>${getStatusBadge(item.report_status)}</td>
                                 <td>
-                                    <a class="btn btn-sm btn-warning" href="/reviewer/gambling-deposits/${item.id}/edit">Edit</a>
+                                   ${actionButtons}
                                 </td>
                             </tr>
                         `;
@@ -186,12 +214,82 @@
                 })
                 .catch(err => {
                     tableBody.innerHTML =
-                        `<tr><td colspan="10" class="text-center text-danger">Gagal memuat data.</td></tr>`;
+                        `<tr><td colspan="12" class="text-center text-danger">Gagal memuat data.</td></tr>`;
                     pagination.innerHTML = '';
                     infoText.textContent = 'Menampilkan 0 sampai 0 dari 0 data';
                     console.error(err);
                     Swal.fire('Error', 'Gagal memuat data gambling deposits.', 'error');
                 });
+        }
+
+        function showModal(title, url) {
+            const modalHtml = `
+                <div class="modal fade" id="customModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-lg modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">${title}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body text-center">
+                                <img src="${url}" class="img-fluid" height="400px" style="border:none; margin: auto;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const existingModal = document.getElementById('customModal');
+            if (existingModal) existingModal.remove();
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+            const modal = new bootstrap.Modal(document.getElementById('customModal'));
+            modal.show();
+        }
+
+
+        function processDeposit(id, action) {
+            Swal.fire({
+                title: `Yakin ingin ${action} data akun penampung ini?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Ya',
+                cancelButtonText: 'Batal',
+                customClass: {
+                    title: 'swal-title-sm',
+                    content: 'swal-content-sm',
+                    confirmButton: 'swal-btn-sm',
+                    cancelButton: 'swal-btn-sm'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    axios.post(`/reviewer/gambling-deposits/${id}/${action}`)
+                        .then(res => {
+                            Swal.fire({
+                                title: 'Berhasil',
+                                text: `Deposit berhasil di-${action}`,
+                                icon: 'success',
+                                customClass: {
+                                    title: 'swal-title-sm',
+                                    content: 'swal-content-sm'
+                                }
+                            });
+                            fetchDeposits(currentPage); // reload data
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            Swal.fire({
+                                title: 'Error',
+                                text: `Gagal ${action} deposit.`,
+                                icon: 'error',
+                                customClass: {
+                                    title: 'swal-title-sm',
+                                    content: 'swal-content-sm'
+                                }
+                            });
+                        });
+                }
+            });
         }
 
         function renderPagination(currentPage, lastPage) {

@@ -14,12 +14,6 @@ return new class extends Migration
         Schema::create('gambling_deposits', function (Blueprint $table) {
             $table->id();
 
-            // Website Information
-            $table->string('website_name');
-            $table->string('website_url');
-            $table->boolean('is_confirmed_gambling')->default(false);
-            $table->boolean('is_accessible')->default(false);
-
             // Customer Relation (nullable)
             $table->unsignedBigInteger('customer_id')->nullable();
             $table->foreign('customer_id')

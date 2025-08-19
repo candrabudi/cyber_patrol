@@ -57,10 +57,9 @@
                                 <th>URL</th>
                                 <th>Tipe</th>
                                 <th>Customer</th>
-                                <th>Pemilik Akun</th>
-                                <th>Nomor Akun</th>
-                                <th>DiInput</th>
-                                <th>DiUpdate</th>
+                                <th>Pemilik</th>
+                                <th>REK/NO/VA/MID</th>
+                                <th>DiBuat</th>
                                 <th>Status</th>
                                 <th>Aksi</th>
                             </tr>
@@ -154,22 +153,20 @@
 
                     tableBody.innerHTML = '';
                     data.forEach((item, index) => {
-                        const customerName = item.channel?.customer?.full_name || item.channel_name || '-';
-                        const nonMemberFlag = item.is_non_member ? '<span class="badge bg-warning text-white">Non Member</span>' : '';
-                        const channelType = item.channel?.channel_type || '-';
+                        const customerName = item.channel?.customer?.full_name || item.gambling_deposit_account.channel_name || '-';
+                        const nonMemberFlag = item.is_non_member ? '<span class="badge bg-warning text-white" style="display: block;">Non Member</span>' : '';
+                        const channelType = item.channel?.channel_type || item.gambling_deposit_account.channel_type;
 
                         tableBody.innerHTML += `
                             <tr>
                                 <td>${(current_page - 1) * perPage + index + 1}</td>
-                                <td>${item.website_name}</td>
-                                <td><a href="${item.website_url}" target="_blank" rel="noopener">${item.website_url}</a></td>
+                                <td>${item.website.website_name}</td>
+                                <td><a href="${item.website.website_url}" target="_blank" rel="noopener">${item.website.website_url}</a></td>
                                 <td>${formatChannelType(channelType)}</td>
                                 <td>${customerName} ${nonMemberFlag}</td>
                                 <td>${item.account_name}</td>
                                 <td>${item.account_number}</td>
-                                <td>${item.creator?.username ?? 'Unknown'}</td>
                                 <td>${new Date(item.created_at).toLocaleDateString('id-ID')}</td>
-                                <td>${new Date(item.updated_at).toLocaleDateString('id-ID')}</td>
                                 <td>${getStatusBadge(item.report_status)}</td>
                                 <td>
                                     <a class="btn btn-sm btn-info" href="/superadmin/gambling-deposits/${item.id}/detail">Detail</a>
