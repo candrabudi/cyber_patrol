@@ -197,10 +197,8 @@
 
                     tableBody.innerHTML = '';
                     data.forEach((item, index) => {
-                        const customerName = item.customer?.full_name || '-';
-                        const nonMemberFlag = item.is_non_member ?
-                            '<span class="badge bg-warning text-white" style="display:block;">Non Member</span>' :
-                            '';
+                        const customerName = item.channel.customer?.full_name || item.channel_name;
+                        const nonMemberFlag = item.is_non_member ? '<span class="badge bg-warning text-white" style="display:block;">Non Member</span>' : '';
                         const channelType = item.channel?.channel_type || '-';
 
                         tableBody.innerHTML += `

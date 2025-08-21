@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Superadmin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Channel;
 use App\Models\Customer;
+use App\Models\GamblingDeposit;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -133,8 +135,16 @@ class SCustomerController extends Controller
     public function destroy($id)
     {
         $user = User::where('role', 'customer')->findOrFail($id);
+        Channel::where('customer_id', $user->customer->id)
+            ->delete();
+        GamblingDeposit::where('customer_id', $user->customer->id)
+            ->update([
+                'customer_id' => null,
+                'channel_id' => null,
+                'is_non_member' => true
+            ]);
         $user->delete();
 
-        return response()->json(['message' => 'Customer deleted successfully']);
+        return response()->json(['message' => 'Customer deleted successfully' . $user->customer->id]);
     }
 }

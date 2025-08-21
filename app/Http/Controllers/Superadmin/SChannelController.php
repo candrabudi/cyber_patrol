@@ -159,6 +159,7 @@ class SChannelController extends Controller
         if ($gamblingDepositIds->isNotEmpty()) {
             GamblingDeposit::whereIn('id', $gamblingDepositIds)
                 ->update([
+                    'customer_id' => $customer->id,
                     'channel_id' => $channelId,
                     'is_non_member' => 0,
                 ]);
