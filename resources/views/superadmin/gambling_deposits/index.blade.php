@@ -12,8 +12,8 @@
         </div>
         <div class="card-datatable">
             <div id="DataTables_Table_0_wrapper" class="dt-container dt-bootstrap5 dt-empty-footer">
-
                 <div class="row m-3 my-0 justify-content-between">
+                    <!-- Length -->
                     <div class="d-md-flex justify-content-between align-items-center dt-layout-start col-md-auto me-auto">
                         <div class="dt-length mb-md-6 mb-0">
                             <select name="DataTables_Table_0_length" aria-controls="DataTables_Table_0"
@@ -28,10 +28,22 @@
                     </div>
                     <div
                         class="d-md-flex align-items-center dt-layout-end col-md-auto ms-auto d-flex gap-md-4 justify-content-md-between justify-content-center gap-2 flex-wrap">
-                        <div class="dt-search"><input type="search" class="form-control" id="dt-search-0"
-                                placeholder="Cari channel" aria-controls="DataTables_Table_0"><label
-                                for="dt-search-0"></label>
+                        <div class="dt-search">
+                            <input type="search" class="form-control" id="dt-search-0" placeholder="Cari channel"
+                                aria-controls="DataTables_Table_0">
+                            <label for="dt-search-0"></label>
                         </div>
+                        <div>
+                            <select id="filter-member" class="form-select">
+                                <option value="">Semua</option>
+                                <option value="member">Member</option>
+                                <option value="non-member">Non Member</option>
+                            </select>
+                        </div>
+                        <div>
+                            <input type="text" id="filter-date" class="form-control" placeholder="Pilih rentang tanggal">
+                        </div>
+                        <!-- Buttons -->
                         <div class="dt-buttons btn-group flex-wrap d-flex gap-4 mb-md-0 mb-4">
                             <a href="{{ route('superadmin.gambling_deposits.create') }}" class="btn add-new btn-primary">
                                 <span>
@@ -45,7 +57,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="justify-content-between dt-layout-table">
                 <div class="d-md-flex justify-content-between align-items-center dt-layout-full table-responsive">
                     <table class="datatables-users table dataTable dtr-column" id="DataTables_Table_0"
@@ -74,7 +85,6 @@
                     </table>
                 </div>
             </div>
-
             <div class="d-flex justify-content-between align-items-center m-3">
                 <div id="DataTables_Table_0_info" class="dataTables_info" role="status" aria-live="polite"></div>
                 <ul id="pagination" class="pagination pagination-primary pagination-sm"></ul>
@@ -82,28 +92,58 @@
         </div>
     </div>
 @endsection
-
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment/min/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
     <script>
-        axios.defaults.headers.common['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]').getAttribute(
-            'content');
+        axios.defaults.headers.common['X-CSRF-TOKEN'] =
+            document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
         const tableBody = document.querySelector('#DataTables_Table_0 tbody');
         const pagination = document.querySelector('#pagination');
         const infoText = document.getElementById('DataTables_Table_0_info');
         const perPageSelect = document.getElementById('dt-length-0');
         const searchInput = document.getElementById('dt-search-0');
+        const memberSelect = document.getElementById('filter-member'); // dropdown member
+        const dateInput = document.getElementById('filter-date'); // daterangepicker
 
         let currentPage = 1;
         let lastPage = 1;
         let perPage = parseInt(perPageSelect.value);
         let searchQuery = '';
+        let memberFilter = ''; // member / non-member
+        let dateStart = '';
+        let dateEnd = '';
+
+        // init daterangepicker
+        $(dateInput).daterangepicker({
+            autoUpdateInput: false,
+            locale: {
+                format: 'YYYY-MM-DD',
+                cancelLabel: 'Clear'
+            }
+        });
+
+        $(dateInput).on('apply.daterangepicker', function(ev, picker) {
+            dateStart = picker.startDate.format('YYYY-MM-DD');
+            dateEnd = picker.endDate.format('YYYY-MM-DD');
+            this.value = dateStart + ' - ' + dateEnd;
+            fetchDeposits(1);
+        });
+
+        $(dateInput).on('cancel.daterangepicker', function(ev, picker) {
+            dateStart = '';
+            dateEnd = '';
+            this.value = '';
+            fetchDeposits(1);
+        });
 
         function formatChannelType(str) {
-            return str
-                .toLowerCase()
+            if (!str) return '-';
+            return str.toLowerCase()
                 .split('_')
                 .map(word => word.charAt(0).toUpperCase() + word.slice(1))
                 .join(' ');
@@ -121,16 +161,18 @@
             }
         }
 
-
         function fetchDeposits(page = 1) {
             currentPage = page;
             tableBody.innerHTML = '<tr><td colspan="12" class="text-center">Loading...</td></tr>';
 
             axios.get('/superadmin/gambling-deposits/data', {
                     params: {
-                        page: currentPage,
+                        page: page,
                         per_page: perPage,
-                        search: searchQuery
+                        search: searchQuery,
+                        member: memberFilter,
+                        date_start: dateStart,
+                        date_end: dateEnd
                     }
                 })
                 .then(res => {
@@ -143,7 +185,7 @@
 
                     if (data.length === 0) {
                         tableBody.innerHTML =
-                            '<tr><td colspan="10" class="text-center">Data tidak ditemukan.</td></tr>';
+                            '<tr><td colspan="12" class="text-center">Data tidak ditemukan.</td></tr>';
                         pagination.innerHTML = '';
                         infoText.textContent = `Showing 0 to 0 of 0 entries`;
                         return;
@@ -155,37 +197,35 @@
 
                     tableBody.innerHTML = '';
                     data.forEach((item, index) => {
-                        const customerName = item.channel?.customer?.full_name || item.channel_name || '-';
-                        const nonMemberFlag = item.is_non_member ? '<span class="badge bg-warning text-white" style="display: block;">Non Member</span>' : '';
+                        const customerName = item.customer?.full_name || '-';
+                        const nonMemberFlag = item.is_non_member ?
+                            '<span class="badge bg-warning text-white" style="display:block;">Non Member</span>' :
+                            '';
                         const channelType = item.channel?.channel_type || '-';
 
                         tableBody.innerHTML += `
-                            <tr>
-                                <td>${(current_page - 1) * perPage + index + 1}</td>
-                                <td>${item.website_name}</td>
-                                <td><a href="${item.website_url}" target="_blank" rel="noopener">${item.website_url}</a></td>
-                                <td>${formatChannelType(channelType)}</td>
-                                <td>${customerName} ${nonMemberFlag}</td>
-                                <td>${item.account_name}</td>
-                                <td>${item.account_number}</td>
-                                <td>${item.creator?.username ?? 'Unknown'}</td>
-                                <td>${new Date(item.created_at).toLocaleDateString('id-ID')}</td>
-                                <td>${new Date(item.updated_at).toLocaleDateString('id-ID')}</td>
-                                <td>${getStatusBadge(item.report_status)}</td>
-                                <td>
-                                    <a class="btn btn-sm btn-info" href="/superadmin/gambling-deposits/${item.id}/detail">Detail</a>
-                                </td>
-                            </tr>
-                        `;
+                        <tr>
+                            <td>${(current_page - 1) * perPage + index + 1}</td>
+                            <td>${item.website_name}</td>
+                            <td><a href="${item.website_url}" target="_blank" rel="noopener">${item.website_url}</a></td>
+                            <td>${formatChannelType(channelType)}</td>
+                            <td>${customerName} ${nonMemberFlag}</td>
+                            <td>${item.account_name}</td>
+                            <td>${item.account_number}</td>
+                            <td>${item.creator?.username ?? 'Unknown'}</td>
+                            <td>${new Date(item.created_at).toLocaleDateString('id-ID')}</td>
+                            <td>${new Date(item.updated_at).toLocaleDateString('id-ID')}</td>
+                            <td>${getStatusBadge(item.report_status)}</td>
+                            <td><a class="btn btn-sm btn-info" href="/superadmin/gambling-deposits/${item.id}/detail">Detail</a></td>
+                        </tr>
+                    `;
                     });
-
-
 
                     renderPagination(current_page, last_page);
                 })
                 .catch(err => {
                     tableBody.innerHTML =
-                        `<tr><td colspan="10" class="text-center text-danger">Gagal memuat data.</td></tr>`;
+                        `<tr><td colspan="12" class="text-center text-danger">Gagal memuat data.</td></tr>`;
                     pagination.innerHTML = '';
                     infoText.textContent = 'Showing 0 to 0 of 0 entries';
                     console.error(err);
@@ -197,38 +237,30 @@
             let html = '';
 
             html += `
-            <li class="page-item first ${currentPage === 1 ? 'disabled' : ''}">
-                <a class="page-link waves-effect" href="javascript:void(0);" data-page="first">
-                    <i class="icon-base ti tabler-chevrons-left icon-sm"></i>
-                </a>
-            </li>
-            <li class="page-item prev ${currentPage === 1 ? 'disabled' : ''}">
-                <a class="page-link waves-effect" href="javascript:void(0);" data-page="prev">
-                    <i class="icon-base ti tabler-chevron-left icon-sm"></i>
-                </a>
-            </li>
-        `;
+                <li class="page-item first ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="javascript:void(0);" data-page="first">«</a>
+                </li>
+                <li class="page-item prev ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="javascript:void(0);" data-page="prev">‹</a>
+                </li>
+            `;
 
             for (let i = 1; i <= lastPage; i++) {
                 html += `
-                <li class="page-item ${i === currentPage ? 'active' : ''}">
-                    <a class="page-link waves-effect" href="javascript:void(0);" data-page="${i}">${i}</a>
-                </li>
-            `;
+                    <li class="page-item ${i === currentPage ? 'active' : ''}">
+                        <a class="page-link" href="javascript:void(0);" data-page="${i}">${i}</a>
+                    </li>
+                `;
             }
 
             html += `
-            <li class="page-item next ${currentPage === lastPage ? 'disabled' : ''}">
-                <a class="page-link waves-effect" href="javascript:void(0);" data-page="next">
-                    <i class="icon-base ti tabler-chevron-right icon-sm"></i>
-                </a>
-            </li>
-            <li class="page-item last ${currentPage === lastPage ? 'disabled' : ''}">
-                <a class="page-link waves-effect" href="javascript:void(0);" data-page="last">
-                    <i class="icon-base ti tabler-chevrons-right icon-sm"></i>
-                </a>
-            </li>
-        `;
+                <li class="page-item next ${currentPage === lastPage ? 'disabled' : ''}">
+                    <a class="page-link" href="javascript:void(0);" data-page="next">›</a>
+                </li>
+                <li class="page-item last ${currentPage === lastPage ? 'disabled' : ''}">
+                    <a class="page-link" href="javascript:void(0);" data-page="last">»</a>
+                </li>
+            `;
 
             pagination.innerHTML = html;
 
@@ -249,6 +281,7 @@
             });
         }
 
+        // event listeners
         perPageSelect.addEventListener('change', () => {
             perPage = parseInt(perPageSelect.value);
             fetchDeposits(1);
@@ -263,6 +296,12 @@
             }, 500);
         });
 
+        memberSelect.addEventListener('change', () => {
+            memberFilter = memberSelect.value;
+            fetchDeposits(1);
+        });
+
+        // initial load
         fetchDeposits();
     </script>
 @endpush

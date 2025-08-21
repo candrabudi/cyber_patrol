@@ -31,8 +31,14 @@ class SGamblingDepositController extends Controller
         $perPage = $request->get('per_page', 10);
         $search = $request->get('search', '');
 
+        // filter tambahan
+        $memberFilter = $request->get('member'); // "member", "non-member", atau null
+        $dateStart = $request->get('date_start'); // format YYYY-MM-DD
+        $dateEnd = $request->get('date_end');     // format YYYY-MM-DD
+
         $query = GamblingDeposit::with(['channel.customer', 'creator', 'gamblingDepositAccounts', 'website']);
 
+        // search
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('website_name', 'like', "%{$search}%")
@@ -46,6 +52,23 @@ class SGamblingDepositController extends Controller
                         $q3->where('username', 'like', "%{$search}%");
                     });
             });
+        }
+
+        // filter member / non-member
+        if ($memberFilter) {
+            if ($memberFilter === 'member') {
+                $query->where('is_non_member', false);
+            } elseif ($memberFilter === 'non-member') {
+                $query->where('is_non_member', true);
+            }
+        }
+
+        // filter date range
+        if ($dateStart && $dateEnd) {
+            $query->whereBetween('created_at', [
+                $dateStart . ' 00:00:00',
+                $dateEnd . ' 23:59:59'
+            ]);
         }
 
         $paginated = $query->orderBy('created_at', 'desc')->paginate($perPage);
