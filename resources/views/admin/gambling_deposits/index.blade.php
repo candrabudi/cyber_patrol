@@ -169,7 +169,7 @@
                                 <td>${new Date(item.created_at).toLocaleDateString('id-ID')}</td>
                                 <td>${getStatusBadge(item.report_status)}</td>
                                 <td>
-                                    <a class="btn btn-sm btn-info" href="/superadmin/gambling-deposits/${item.id}/detail">Detail</a>
+                                    <a class="btn btn-sm btn-info" href="/admin/gambling-deposits/${item.id}/detail">Detail</a>
                                 </td>
                             </tr>
                         `;
