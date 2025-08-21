@@ -59,6 +59,7 @@ Route::middleware(['auth', RoleMiddleware::class . ':superadmin'])->prefix('supe
         Route::get('/{id}/detail', [SGamblingDepositController::class, 'detail'])->name('detail');
         Route::get('/create', [SGamblingDepositController::class, 'create'])->name('create');
         Route::post('/store', [SGamblingDepositController::class, 'store'])->name('store');
+        Route::delete('/{a}', [SGamblingDepositController::class, 'destroy'])->name('destroy');
     });
 });
 

@@ -10,6 +10,7 @@ use App\Models\ErrorLog;
 use App\Models\GamblingDeposit;
 use App\Models\GamblingDepositAccount;
 use App\Models\GamblingDepositAttachment;
+use App\Models\GamblingDepositLog;
 use App\Models\Nns;
 use App\Models\Provider;
 use App\Models\Website;
@@ -438,5 +439,32 @@ class SGamblingDepositController extends Controller
         }
 
         return $result;
+    }
+
+    public function destroy($id)
+    {
+        $deposit = GamblingDeposit::find($id);
+
+        if (!$deposit) {
+            return response()->json([
+                'message' => 'Data tidak ditemukan.'
+            ], 404);
+        }
+
+        if ($deposit->report_status !== 'pending') {
+            return response()->json([
+                'message' => 'Hanya data dengan status pending yang bisa dihapus.'
+            ], 403);
+        }
+
+        GamblingDepositAttachment::where('gambling_deposit_id', $deposit->id)->delete();
+        GamblingDepositLog::where('gambling_deposit_id', $deposit->id)->delete();
+        GamblingDepositAccount::where('gambling_deposit_id', $deposit->id)->delete();
+
+        $deposit->delete();
+
+        return response()->json([
+            'message' => 'Data berhasil dihapus.'
+        ], 200);
     }
 }

@@ -60,7 +60,7 @@
             <div class="justify-content-between dt-layout-table">
                 <div class="d-md-flex justify-content-between align-items-center dt-layout-full table-responsive">
                     <table class="datatables-users table dataTable dtr-column" id="DataTables_Table_0"
-                        aria-describedby="DataTables_Table_0_info">
+                        aria-describedby="DataTables_Table_0_info" style="min-width: 1800px;">
                         <thead class="border-top">
                             <tr>
                                 <th>#</th>
@@ -74,7 +74,7 @@
                                 <th>DiInput</th>
                                 <th>DiUpdate</th>
                                 <th>Status</th>
-                                <th>Aksi</th>
+                                <th style="width: 200px;">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -107,18 +107,17 @@
         const infoText = document.getElementById('DataTables_Table_0_info');
         const perPageSelect = document.getElementById('dt-length-0');
         const searchInput = document.getElementById('dt-search-0');
-        const memberSelect = document.getElementById('filter-member'); // dropdown member
-        const dateInput = document.getElementById('filter-date'); // daterangepicker
+        const memberSelect = document.getElementById('filter-member');
+        const dateInput = document.getElementById('filter-date');
 
         let currentPage = 1;
         let lastPage = 1;
         let perPage = parseInt(perPageSelect.value);
         let searchQuery = '';
-        let memberFilter = ''; // member / non-member
+        let memberFilter = '';
         let dateStart = '';
         let dateEnd = '';
 
-        // init daterangepicker
         $(dateInput).daterangepicker({
             autoUpdateInput: false,
             locale: {
@@ -198,7 +197,9 @@
                     tableBody.innerHTML = '';
                     data.forEach((item, index) => {
                         const customerName = item.channel.customer?.full_name || item.channel_name;
-                        const nonMemberFlag = item.is_non_member ? '<span class="badge bg-warning text-white" style="display:block;">Non Member</span>' : '';
+                        const nonMemberFlag = item.is_non_member ?
+                            '<span class="badge bg-warning text-white" style="display:block;">Non Member</span>' :
+                            '';
                         const channelType = item.channel?.channel_type || '-';
 
                         tableBody.innerHTML += `
@@ -214,7 +215,10 @@
                             <td>${new Date(item.created_at).toLocaleDateString('id-ID')}</td>
                             <td>${new Date(item.updated_at).toLocaleDateString('id-ID')}</td>
                             <td>${getStatusBadge(item.report_status)}</td>
-                            <td><a class="btn btn-sm btn-info" href="/superadmin/gambling-deposits/${item.id}/detail">Detail</a></td>
+                            <td>
+                                <a class="btn btn-sm btn-info" href="/superadmin/gambling-deposits/${item.id}/detail">Detail</a>
+                                <button class="btn btn-sm btn-danger" onclick="deleteDeposit(${item.id})">Hapus</button>
+                            </td>
                         </tr>
                     `;
                     });
@@ -235,30 +239,30 @@
             let html = '';
 
             html += `
-                <li class="page-item first ${currentPage === 1 ? 'disabled' : ''}">
-                    <a class="page-link" href="javascript:void(0);" data-page="first">«</a>
-                </li>
-                <li class="page-item prev ${currentPage === 1 ? 'disabled' : ''}">
-                    <a class="page-link" href="javascript:void(0);" data-page="prev">‹</a>
-                </li>
-            `;
+            <li class="page-item first ${currentPage === 1 ? 'disabled' : ''}">
+                <a class="page-link" href="javascript:void(0);" data-page="first">«</a>
+            </li>
+            <li class="page-item prev ${currentPage === 1 ? 'disabled' : ''}">
+                <a class="page-link" href="javascript:void(0);" data-page="prev">‹</a>
+            </li>
+        `;
 
             for (let i = 1; i <= lastPage; i++) {
                 html += `
-                    <li class="page-item ${i === currentPage ? 'active' : ''}">
-                        <a class="page-link" href="javascript:void(0);" data-page="${i}">${i}</a>
-                    </li>
-                `;
+                <li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="javascript:void(0);" data-page="${i}">${i}</a>
+                </li>
+            `;
             }
 
             html += `
-                <li class="page-item next ${currentPage === lastPage ? 'disabled' : ''}">
-                    <a class="page-link" href="javascript:void(0);" data-page="next">›</a>
-                </li>
-                <li class="page-item last ${currentPage === lastPage ? 'disabled' : ''}">
-                    <a class="page-link" href="javascript:void(0);" data-page="last">»</a>
-                </li>
-            `;
+            <li class="page-item next ${currentPage === lastPage ? 'disabled' : ''}">
+                <a class="page-link" href="javascript:void(0);" data-page="next">›</a>
+            </li>
+            <li class="page-item last ${currentPage === lastPage ? 'disabled' : ''}">
+                <a class="page-link" href="javascript:void(0);" data-page="last">»</a>
+            </li>
+        `;
 
             pagination.innerHTML = html;
 
@@ -279,7 +283,6 @@
             });
         }
 
-        // event listeners
         perPageSelect.addEventListener('change', () => {
             perPage = parseInt(perPageSelect.value);
             fetchDeposits(1);
@@ -299,7 +302,46 @@
             fetchDeposits(1);
         });
 
-        // initial load
+        function deleteDeposit(id) {
+            Swal.fire({
+                title: 'Apakah kamu yakin?',
+                text: "Data deposit ini akan dihapus permanen!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Ya, hapus!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    axios.delete(`/superadmin/gambling-deposits/${id}`)
+                        .then(res => {
+                            if (res.status === 200) {
+                                Swal.fire('Berhasil!', res.data.message, 'success');
+                                fetchDeposits(currentPage);
+                            }
+                        })
+                        .catch(err => {
+                            if (err.response) {
+                                const status = err.response.status;
+                                const message = err.response.data.message || 'Terjadi kesalahan.';
+
+                                if (status === 404) {
+                                    Swal.fire('Tidak Ditemukan', message, 'warning');
+                                } else if (status === 403) {
+                                    Swal.fire('Tidak Bisa Dihapus', message, 'info');
+                                } else {
+                                    Swal.fire('Error', message, 'error');
+                                }
+                            } else {
+                                Swal.fire('Error', 'Gagal menghapus data.', 'error');
+                            }
+                        });
+                }
+            });
+        }
+
+
         fetchDeposits();
     </script>
 @endpush
