@@ -32,14 +32,12 @@ class SGamblingDepositController extends Controller
         $perPage = $request->get('per_page', 10);
         $search = $request->get('search', '');
 
-        // filter tambahan
-        $memberFilter = $request->get('member'); // "member", "non-member", atau null
-        $dateStart = $request->get('date_start'); // format YYYY-MM-DD
-        $dateEnd = $request->get('date_end');     // format YYYY-MM-DD
+        $memberFilter = $request->get('member');
+        $dateStart = $request->get('date_start');
+        $dateEnd = $request->get('date_end');
 
         $query = GamblingDeposit::with(['channel.customer', 'creator', 'gamblingDepositAccounts', 'website']);
 
-        // search
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('website_name', 'like', "%{$search}%")
@@ -55,7 +53,6 @@ class SGamblingDepositController extends Controller
             });
         }
 
-        // filter member / non-member
         if ($memberFilter) {
             if ($memberFilter === 'member') {
                 $query->where('is_non_member', false);
@@ -64,7 +61,6 @@ class SGamblingDepositController extends Controller
             }
         }
 
-        // filter date range
         if ($dateStart && $dateEnd) {
             $query->whereBetween('created_at', [
                 $dateStart . ' 00:00:00',
@@ -82,6 +78,7 @@ class SGamblingDepositController extends Controller
                 'id' => $item->id,
                 'website_name' => $item->website->website_name,
                 'website_url' => $item->website->website_url,
+                'source_type' => $item->source_type,
                 'channel' => [
                     'channel_type' => $item->channel ? $item->channel->channel_type : $accountChannel->channel_type,
                     'customer' => [

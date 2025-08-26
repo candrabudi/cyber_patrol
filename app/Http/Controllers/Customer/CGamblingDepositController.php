@@ -21,7 +21,7 @@ class CGamblingDepositController extends Controller
 
         $userId = Auth::id();
 
-        $query = GamblingDeposit::with(['channel.customer', 'creator'])
+        $query = GamblingDeposit::with(['channel.customer', 'creator', 'website'])
             ->whereHas('channel.customer', function ($q) use ($userId) {
                 $q->where('user_id', $userId);
             })

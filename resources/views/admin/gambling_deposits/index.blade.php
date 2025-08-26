@@ -59,6 +59,7 @@
                                 <th>Customer</th>
                                 <th>Pemilik</th>
                                 <th>REK/NO/VA/MID</th>
+                                <th>Sumber</th>
                                 <th>DiBuat</th>
                                 <th>Status</th>
                                 <th>Aksi</th>
@@ -166,6 +167,11 @@
                                 <td>${customerName} ${nonMemberFlag}</td>
                                 <td>${item.account_name}</td>
                                 <td>${item.account_number}</td>
+                                <td>
+                                    <span class="badge ${item.source_type === 'search' ? 'bg-success' : 'bg-primary'}">
+                                        ${item.source_type === 'search' ? 'Pencarian' : 'Permintaan'}
+                                    </span>
+                                </td>
                                 <td>${new Date(item.created_at).toLocaleDateString('id-ID')}</td>
                                 <td>${getStatusBadge(item.report_status)}</td>
                                 <td>

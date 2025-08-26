@@ -51,9 +51,9 @@
 
                         <div class="mb-3">
                             <label class="form-label">Pilih Tipe Channel</label>
-                            <select name="channel_type[]" class="form-select channel_type" required>
+                            <select class="form-select channel_type" required>
                                 <option value="">-- Pilih Tipe Channel --</option>
-                                <option value="transfer">Bank</option>
+                                <option value="transfer">Transfer</option>
                                 <option value="qris">QRIS</option>
                                 <option value="virtual_account">Virtual Account</option>
                                 <option value="pulsa">Pulsa</option>
@@ -63,19 +63,19 @@
 
                         <div class="mb-3 account_name_div" style="display:none;">
                             <label class="form-label">Nama Rekening</label>
-                            <input type="text" class="form-control account_name" name="account_name[]">
+                            <input type="text" class="form-control account_name">
                             <div class="invalid-feedback">Nama rekening wajib diisi.</div>
                         </div>
 
                         <div class="mb-3 account_number_div" style="display:none;">
                             <label class="form-label account_number_label">Nomor Rekening / Nomor Handphone</label>
-                            <input type="text" class="form-control account_number" name="account_number[]">
+                            <input type="text" class="form-control account_number">
                             <div class="invalid-feedback">Nomor rekening / HP tidak valid.</div>
                         </div>
 
                         <div class="mb-3 channel_select_div" style="display:none;">
                             <label class="form-label channel_label">Pilih Channel</label>
-                            <select name="channel_id[]" class="form-select select2 channel_id">
+                            <select class="form-select select2 channel_id">
                                 <option value="">-- Pilih Channel --</option>
                             </select>
                             <div class="invalid-feedback">Channel wajib dipilih.</div>
@@ -83,15 +83,14 @@
 
                         <div class="mb-3 account_proofs_div">
                             <label class="form-label">Bukti Rekening</label>
-                            <input type="file" class="form-control account_proofs" name="account_proofs[]"
-                                accept="image/*,application/pdf" required>
+                            <input type="file" class="form-control account_proofs" accept="image/*,application/pdf"
+                                required>
                             <div class="invalid-feedback">Bukti rekening wajib diupload (jpg/png/pdf, max 2MB).</div>
                         </div>
 
                         <div class="mb-3 qris_proof_div" style="display:none;">
                             <label class="form-label">Bukti QRIS</label>
-                            <input type="file" class="form-control qris_proofs" name="qris_proofs[]"
-                                accept="image/*,application/pdf">
+                            <input type="file" class="form-control qris_proofs" accept="image/*,application/pdf">
                             <div class="invalid-feedback">Bukti QRIS wajib diupload (jpg/png/pdf, max 2MB).</div>
                         </div>
                     </div>
@@ -99,7 +98,6 @@
 
                 <button type="button" class="btn btn-secondary mt-2" id="addRekeningBtn">+ Tambah Rekening</button>
 
-                {{-- ================= SUBMIT ================= --}}
                 <div class="mt-4">
                     <button type="submit" class="btn btn-primary" id="submitBtn">Simpan</button>
                 </div>
@@ -114,7 +112,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const websiteInput = document.getElementById('website_url');
-            const submitBtn = document.getElementById('submitBtn'); // tombol submit utama
+            const submitBtn = document.getElementById('submitBtn');
             const rekeningWrapper = document.getElementById('rekeningWrapper');
             const addRekeningBtn = document.getElementById('addRekeningBtn');
             const form = document.getElementById('gamblingDepositForm');
@@ -123,16 +121,13 @@
             const banks = @json($banks);
             const providers = @json($providers);
 
-            // Regex validation
             const urlRegex = /^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}(\/.*)?$/i;
             const hpRegex = /^[0-9]{10,15}$/;
             const rekeningRegex = /^[0-9]{6,20}$/;
 
-            // ================= Website URL Validation =================
             websiteInput.addEventListener('blur', () => {
                 const inputUrl = websiteInput.value.trim();
                 if (!inputUrl) return;
-
                 axios.get('/websites/check-url', {
                         params: {
                             url: inputUrl
@@ -155,7 +150,6 @@
                     .catch(err => console.error(err));
             });
 
-            // ================= Update Form Fields =================
             function updateFormFields(item, type) {
                 const accountNameDiv = item.querySelector('.account_name_div');
                 const accountNumberDiv = item.querySelector('.account_number_div');
@@ -217,46 +211,113 @@
                 }
             }
 
-            // ================= Input Validation =================
             function validateInput(input) {
+                let valid = true;
+                let message = "";
+                const parent = input.closest('.rekening-item');
+                const type = parent?.querySelector('.channel_type')?.value;
+
+                // default required check (kecuali file)
                 if (input.hasAttribute('required') && !input.value.trim() && input.type !== 'file') {
-                    input.classList.add('is-invalid');
-                    return false;
+                    valid = false;
+                    message = input.closest('.mb-3').querySelector('label')?.textContent + " wajib diisi.";
                 }
 
+                // validasi khusus website url
                 if (input.id === 'website_url' && input.value && !urlRegex.test(input.value)) {
+                    valid = false;
+                    message = "URL tidak valid, gunakan format https://...";
+                }
+
+                // ===== TRANSFER =====
+                if (type === 'transfer') {
+                    if (input.classList.contains('account_name') && !input.value.trim()) {
+                        valid = false;
+                        message = "Nama Rekening wajib diisi untuk Transfer.";
+                    }
+                    if (input.classList.contains('account_number')) {
+                        if (!input.value.trim()) {
+                            valid = false;
+                            message = "Nomor Rekening wajib diisi untuk Transfer.";
+                        } else if (!rekeningRegex.test(input.value)) {
+                            valid = false;
+                            message = "Nomor Rekening harus 6–20 digit angka.";
+                        }
+                    }
+                    if (input.classList.contains('channel_id')) {
+                        if (!input.value.trim()) {
+                            valid = false;
+                            message = "Bank wajib dipilih untuk Transfer.";
+                        }
+                    }
+                }
+
+                // ===== QRIS =====
+                if (type === 'qris') {
+                    if (input.classList.contains('qris_proofs')) {
+                        if (input.files.length === 0) {
+                            valid = false;
+                            message = "Bukti QRIS wajib diupload.";
+                        } else {
+                            const file = input.files[0];
+                            const allowed = ['image/jpeg', 'image/png', 'application/pdf'];
+                            if (!allowed.includes(file.type)) {
+                                valid = false;
+                                message = "Format Bukti QRIS harus jpg/png/pdf.";
+                            } else if (file.size > 2 * 1024 * 1024) {
+                                valid = false;
+                                message = "Ukuran Bukti QRIS maksimal 2MB.";
+                            }
+                        }
+                    }
+                }
+
+                // ===== PULSA =====
+                if (type === 'pulsa' && input.classList.contains('account_number') && input.value) {
+                    if (!hpRegex.test(input.value)) {
+                        valid = false;
+                        message = "Nomor HP harus 10–15 digit angka.";
+                    }
+                }
+
+                // ===== VIRTUAL ACCOUNT =====
+                if (type === 'virtual_account' && input.classList.contains('account_number') && input.value) {
+                    if (!/^[0-9]{4,5}$/.test(input.value)) {
+                        valid = false;
+                        message = "Nomor BIN VA harus 4–5 digit angka.";
+                    }
+                }
+
+                // ===== FILE umum (kecuali qris_proofs karena udah dicek di atas) =====
+                if (input.type === 'file' && !input.classList.contains('qris_proofs')) {
+                    if (input.required && input.files.length === 0) {
+                        valid = false;
+                        message = "File wajib diupload.";
+                    } else if (input.files.length > 0) {
+                        const file = input.files[0];
+                        const allowed = ['image/jpeg', 'image/png', 'application/pdf'];
+                        if (!allowed.includes(file.type)) {
+                            valid = false;
+                            message = "Format file harus jpg/png/pdf.";
+                        } else if (file.size > 2 * 1024 * 1024) {
+                            valid = false;
+                            message = "Ukuran file maksimal 2MB.";
+                        }
+                    }
+                }
+
+                // apply error class & message
+                if (!valid) {
                     input.classList.add('is-invalid');
-                    return false;
+                    input.nextElementSibling.textContent = message;
+                } else {
+                    input.classList.remove('is-invalid');
                 }
 
-                if (input.classList.contains('account_number') && input.value) {
-                    const parent = input.closest('.rekening-item');
-                    const type = parent.querySelector('.channel_type').value;
-
-                    if (type === 'pulsa' && !hpRegex.test(input.value)) {
-                        input.classList.add('is-invalid');
-                        return false;
-                    }
-                    if (['transfer', 'bank'].includes(type) && !rekeningRegex.test(input.value)) {
-                        input.classList.add('is-invalid');
-                        return false;
-                    }
-                }
-
-                if (input.type === 'file' && input.files.length > 0) {
-                    const file = input.files[0];
-                    const allowed = ['image/jpeg', 'image/png', 'application/pdf'];
-                    if (!allowed.includes(file.type) || file.size > 2 * 1024 * 1024) {
-                        input.classList.add('is-invalid');
-                        return false;
-                    }
-                }
-
-                input.classList.remove('is-invalid');
-                return true;
+                return valid;
             }
 
-            // ================= Re-initialize Reings =================
+
             function initRekeningEvents(item) {
                 const typeSelect = item.querySelector('.channel_type');
                 typeSelect.addEventListener('change', () => updateFormFields(item, typeSelect.value));
@@ -266,7 +327,7 @@
                     if (document.querySelectorAll('.rekening-item').length > 1) {
                         item.remove();
                     } else {
-                        alert('Minimal 1 rekening harus ada.');
+                        showAlert('warning', 'Minimal 1 rekening harus ada.');
                     }
                 });
 
@@ -295,29 +356,36 @@
                 initRekeningEvents(clone);
             });
 
-            // ================= Show Alert =================
             function showAlert(type, message) {
                 alertContainer.innerHTML = `
-            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>`;
+                    <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                        ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>`;
                 alertContainer.scrollIntoView({
                     behavior: 'smooth'
                 });
             }
 
-            // ================= Submit Form =================
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
 
                 let valid = true;
+                let errorList = [];
+
                 form.querySelectorAll('input, select').forEach(el => {
-                    if (!validateInput(el)) valid = false;
+                    if (!validateInput(el)) {
+                        valid = false;
+                        const label = el.closest('.mb-3')?.querySelector('label')?.textContent || el
+                            .name;
+                        errorList.push(label);
+                    }
                 });
 
                 if (!valid) {
-                    showAlert('danger', 'Periksa kembali input yang belum valid.');
+                    const uniqueErrors = [...new Set(errorList)];
+                    showAlert('danger', "Harap periksa kembali field berikut:<br> - " + uniqueErrors.join(
+                        "<br> - "));
                     return;
                 }
 
@@ -325,56 +393,60 @@
                 const originalText = submitBtn.textContent;
                 submitBtn.textContent = 'Menyimpan...';
 
-                const formData = new FormData(form);
-                const payload = {
-                    _token: formData.get('_token'),
-                    website_name: formData.get('website_name'),
-                    website_url: formData.get('website_url'),
-                    website_proofs: formData.get('website_proofs'),
-                    accounts: []
-                };
+                const formData = new FormData();
+                formData.append('website_name', document.getElementById('website_name').value);
+                formData.append('website_url', document.getElementById('website_url').value);
+                formData.append('website_proofs', document.querySelector('[name="website_proofs"]').files[
+                    0]);
 
-                document.querySelectorAll('.rekening-item').forEach(item => {
-                    payload.accounts.push({
-                        channel_type: item.querySelector('.channel_type')?.value || null,
+                const rekeningItems = document.querySelectorAll('.rekening-item');
+                rekeningItems.forEach((item, index) => {
+                    const account = {
+                        channel_type: item.querySelector('.channel_type').value,
                         account_name: item.querySelector('.account_name')?.value || null,
-                        account_number: item.querySelector('.account_number')?.value ||
-                            null,
-                        channel_id: item.querySelector('.channel_id')?.value || null,
-                        account_proofs: item.querySelector('.account_proofs')?.files[0] ||
-                            null,
-                        qris_proofs: item.querySelector('.qris_proofs')?.files[0] || null,
-                    });
-                });
+                        account_number: item.querySelector('.account_number')?.value || null,
+                        channel_id: item.querySelector('.channel_id')?.value || null
+                    };
+                    formData.append(`accounts[${index}][channel_type]`, account.channel_type);
+                    if (account.account_name) formData.append(`accounts[${index}][account_name]`,
+                        account.account_name);
+                    if (account.account_number) formData.append(
+                        `accounts[${index}][account_number]`, account.account_number);
+                    if (account.channel_id) formData.append(`accounts[${index}][channel_id]`,
+                        account.channel_id);
 
-                const finalFormData = new FormData();
-                Object.keys(payload).forEach(key => {
-                    if (key === 'accounts') {
-                        payload.accounts.forEach((acc, i) => {
-                            Object.keys(acc).forEach(k => {
-                                if (acc[k] !== null) finalFormData.append(
-                                    `accounts[${i}][${k}]`, acc[k]);
-                            });
-                        });
-                    } else {
-                        finalFormData.append(key, payload[key]);
+                    const accProof = item.querySelector('.account_proofs');
+                    if (accProof && accProof.files.length > 0) {
+                        formData.append(`accounts[${index}][account_proofs]`, accProof.files[0]);
+                    }
+                    const qrisProof = item.querySelector('.qris_proofs');
+                    if (qrisProof && qrisProof.files.length > 0) {
+                        formData.append(`accounts[${index}][qris_proofs]`, qrisProof.files[0]);
                     }
                 });
 
-                axios.post(form.action, finalFormData)
+                axios.post(form.action, formData)
                     .then(res => {
-                        if (res.data.success) {
+                        if (res.data && res.data.success) {
                             showAlert('success', res.data.message || 'Data berhasil disimpan');
                             form.reset();
+                            console.log('Saved Data:', res.data.data);
                         } else {
                             showAlert('warning', res.data.message || 'Terjadi masalah');
                         }
                     })
-                    .catch(err => showAlert('danger', 'Gagal menyimpan data.'))
+                    .catch(err => {
+                        let msg = 'Gagal menyimpan data.';
+                        if (err.response && err.response.data && err.response.data.message) {
+                            msg = err.response.data.message;
+                        }
+                        showAlert('danger', msg);
+                    })
                     .finally(() => {
                         submitBtn.disabled = false;
                         submitBtn.textContent = originalText;
                     });
+
             });
         });
     </script>

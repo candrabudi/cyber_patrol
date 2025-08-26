@@ -32,4 +32,11 @@
             <div data-i18n="Pelanggan">Pelanggan</div>
         </a>
     </li>
+
+    <li class="menu-item {{ request()->routeIs('superadmin.gambling_reports.*') ? 'active' : '' }}">
+        <a href="{{ route('superadmin.gambling_reports.index') }}" class="menu-link">
+            <i class="menu-icon icon-base ti tabler-report-analytics"></i>
+            <div data-i18n="Laporan">Laporan</div>
+        </a>
+    </li>
 </ul>

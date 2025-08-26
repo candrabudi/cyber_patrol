@@ -43,24 +43,13 @@
                         <div>
                             <input type="text" id="filter-date" class="form-control" placeholder="Pilih rentang tanggal">
                         </div>
-                        <!-- Buttons -->
-                        <div class="dt-buttons btn-group flex-wrap d-flex gap-4 mb-md-0 mb-4">
-                            <a href="{{ route('superadmin.gambling_deposits.create') }}" class="btn add-new btn-primary">
-                                <span>
-                                    <span class="d-flex align-items-center gap-2">
-                                        <i class="icon-base ti tabler-plus icon-xs"></i>
-                                        <span class="d-none d-sm-inline-block">Tambah Akun</span>
-                                    </span>
-                                </span>
-                            </a>
-                        </div>
                     </div>
                 </div>
             </div>
             <div class="justify-content-between dt-layout-table">
                 <div class="d-md-flex justify-content-between align-items-center dt-layout-full table-responsive">
                     <table class="datatables-users table dataTable dtr-column" id="DataTables_Table_0"
-                        aria-describedby="DataTables_Table_0_info" style="min-width: 1800px;">
+                        aria-describedby="DataTables_Table_0_info" style="min-width: 1900px;">
                         <thead class="border-top">
                             <tr>
                                 <th>#</th>
@@ -71,6 +60,7 @@
                                 <th>Pemilik Akun</th>
                                 <th>Nomor Akun</th>
                                 <th>Kreator</th>
+                                <th>Sumber</th>
                                 <th>DiInput</th>
                                 <th>DiUpdate</th>
                                 <th>Status</th>
@@ -212,6 +202,11 @@
                             <td>${item.account_name}</td>
                             <td>${item.account_number}</td>
                             <td>${item.creator?.username ?? 'Unknown'}</td>
+                            <td>
+                                <span class="badge ${item.source_type === 'search' ? 'bg-success' : 'bg-primary'}">
+                                    ${item.source_type === 'search' ? 'Pencarian' : 'Permintaan'}
+                                </span>
+                            </td>
                             <td>${new Date(item.created_at).toLocaleDateString('id-ID')}</td>
                             <td>${new Date(item.updated_at).toLocaleDateString('id-ID')}</td>
                             <td>${getStatusBadge(item.report_status)}</td>

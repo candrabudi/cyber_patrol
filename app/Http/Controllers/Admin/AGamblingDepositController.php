@@ -90,15 +90,56 @@ class AGamblingDepositController extends Controller
                 'accounts.*.account_proofs'  => 'nullable|file|mimes:jpeg,jpg,png,pdf',
                 'accounts.*.qris_proofs'     => 'nullable|file|mimes:jpeg,jpg,png,pdf',
             ], [
-                'website_name.required' => 'Nama website harus diisi.',
-                'website_url.required'  => 'URL website harus diisi.',
-                'website_url.url'       => 'Format URL website tidak valid.',
-                'website_proofs.required' => 'Bukti website harus diunggah.',
-                'website_proofs.mimes'  => 'Format bukti website harus berupa jpeg, jpg, png, atau pdf.',
+                // Website
+                'website_name.required'     => 'Nama website harus diisi.',
+                'website_url.required'      => 'URL website harus diisi.',
+                'website_url.url'           => 'Format URL website tidak valid.',
+                'website_proofs.required'   => 'Bukti website harus diunggah.',
+                'website_proofs.mimes'      => 'Format bukti website harus berupa jpeg, jpg, png, atau pdf.',
 
-                'accounts.required'     => 'Minimal 1 rekening harus diisi.',
+                // Accounts
+                'accounts.required'         => 'Minimal 1 rekening harus diisi.',
                 'accounts.*.channel_type.required' => 'Tipe channel harus dipilih.',
             ]);
+
+            // ==== Validasi tambahan per tipe channel ====
+            foreach ($validated['accounts'] as $i => $acc) {
+                $row = $i + 1;
+
+                if ($acc['channel_type'] === 'transfer') {
+                    if (empty($acc['account_name'])) {
+                        throw ValidationException::withMessages([
+                            "accounts.$i.account_name" => ["Nama rekening wajib diisi pada akun ke-$row."],
+                        ]);
+                    }
+                    if (empty($acc['account_number'])) {
+                        throw ValidationException::withMessages([
+                            "accounts.$i.account_number" => ["Nomor rekening wajib diisi pada akun ke-$row."],
+                        ]);
+                    }
+                    if (empty($acc['channel_id'])) {
+                        throw ValidationException::withMessages([
+                            "accounts.$i.channel_id" => ["Bank wajib dipilih pada akun ke-$row."],
+                        ]);
+                    }
+                }
+
+                if ($acc['channel_type'] === 'pulsa' && !empty($acc['account_number'])) {
+                    if (!preg_match('/^[0-9]{10,15}$/', $acc['account_number'])) {
+                        throw ValidationException::withMessages([
+                            "accounts.$i.account_number" => ["Nomor HP pada akun ke-$row harus 10–15 digit angka."],
+                        ]);
+                    }
+                }
+
+                if ($acc['channel_type'] === 'virtual_account' && !empty($acc['account_number'])) {
+                    if (!preg_match('/^[0-9]{4,5}$/', $acc['account_number'])) {
+                        throw ValidationException::withMessages([
+                            "accounts.$i.account_number" => ["Nomor BIN VA pada akun ke-$row harus 4–5 digit angka."],
+                        ]);
+                    }
+                }
+            }
 
             DB::beginTransaction();
 
@@ -307,14 +348,9 @@ class AGamblingDepositController extends Controller
                         break;
                 }
 
-
                 $deposit->save();
                 $gamblingDepositAccount->gambling_deposit_id = $deposit->id;
                 $gamblingDepositAccount->save();
-                if ($request->hasFile("accounts.$index.account_proofs")) {
-                    $path = $request->file("accounts.$index.account_proofs")->store('attachments/account_proof');
-                    $deposit->account_proof = $path;
-                }
 
                 if ($request->hasFile("accounts.$index.account_proofs")) {
                     $path = $request->file("accounts.$index.account_proofs")->store('attachments/account_proof');
@@ -356,11 +392,11 @@ class AGamblingDepositController extends Controller
             return response()->json([
                 'success' => 0,
                 'message' => 'Terjadi kesalahan pada server. Silakan coba lagi nanti.',
-                'error' => $e->getMessage(),
-                'request' => $request
+                'error'   => $e->getMessage(),
             ], 500);
         }
     }
+
 
 
     private function parseEMV($data)

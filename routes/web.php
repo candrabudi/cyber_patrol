@@ -2,16 +2,19 @@
 
 use App\Http\Controllers\Admin\ADashboardController;
 use App\Http\Controllers\Admin\AGamblingDepositController;
+use App\Http\Controllers\Admin\ARequestGamblingDepositController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Customer\CDashboardController;
 use App\Http\Controllers\Customer\CGamblingDepositController;
 use App\Http\Controllers\Customer\CGamblingReportController;
+use App\Http\Controllers\Customer\CRequestGamblingDepositController;
 use App\Http\Controllers\Reviewer\RDashboardController;
 use App\Http\Controllers\Reviewer\RGamblingDepositController;
 use App\Http\Controllers\Superadmin\SChannelController;
 use App\Http\Controllers\Superadmin\SCustomerController;
 use App\Http\Controllers\Superadmin\SDashboardController;
 use App\Http\Controllers\Superadmin\SGamblingDepositController;
+use App\Http\Controllers\Superadmin\SGamblingReportController;
 use App\Http\Controllers\Superadmin\SUserController;
 use App\Http\Middleware\RoleMiddleware;
 use App\Models\Website;
@@ -61,6 +64,13 @@ Route::middleware(['auth', RoleMiddleware::class . ':superadmin'])->prefix('supe
         Route::post('/store', [SGamblingDepositController::class, 'store'])->name('store');
         Route::delete('/{a}', [SGamblingDepositController::class, 'destroy'])->name('destroy');
     });
+
+    Route::prefix('gambling-reports')->name('gambling_reports.')->group(function () {
+        Route::get('/', [SGamblingReportController::class, 'index'])->name('index');
+        Route::get('/data', [SGamblingReportController::class, 'data'])->name('data');
+
+        Route::post('/export', [SGamblingReportController::class, 'export'])->name('export');
+    });
 });
 
 
@@ -73,6 +83,15 @@ Route::middleware(['auth', RoleMiddleware::class . ':admin'])->prefix('admin')->
         Route::get('/{id}/detail', [AGamblingDepositController::class, 'detail'])->name('detail');
         Route::get('/create', [AGamblingDepositController::class, 'create'])->name('create');
         Route::post('/store', [AGamblingDepositController::class, 'store'])->name('store');
+    });
+
+    Route::prefix('request-gambling-deposits')->name('request_gambling_deposits.')->group(function () {
+        Route::get('/', [ARequestGamblingDepositController::class, 'index'])->name('index');
+        Route::get('/data', [ARequestGamblingDepositController::class, 'data'])->name('data');
+        Route::get('/{id}/detail', [ARequestGamblingDepositController::class, 'detail'])->name('detail');
+        Route::post('/store', [ARequestGamblingDepositController::class, 'store'])->name('store');
+        Route::put('/{id}', [ARequestGamblingDepositController::class, 'update'])->name('update');
+        Route::delete('/{id}', [ARequestGamblingDepositController::class, 'destroy'])->name('destroy');
     });
 });
 
@@ -100,8 +119,11 @@ Route::middleware(['auth', RoleMiddleware::class . ':customer'])->prefix('custom
     Route::prefix('gambling-reports')->name('gambling_reports.')->group(function () {
         Route::get('/', [CGamblingReportController::class, 'index'])->name('index');
         Route::get('/data', [CGamblingReportController::class, 'data'])->name('data');
-
         Route::post('/export', [CGamblingReportController::class, 'export'])->name('export');
+    });
+
+    Route::prefix('request-rekening')->name('request_rekening.')->group(function () {
+        Route::post('/store', [CRequestGamblingDepositController::class, 'store'])->name('store');
     });
 });
 
